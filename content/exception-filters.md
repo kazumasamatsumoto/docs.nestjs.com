@@ -408,3 +408,76 @@ bootstrap();
 ```
 
 2番目の方法は、`APP_FILTER`トークンを使用することです（<a href="exception-filters#binding-filters">ここで示したように</a>）。
+
+Nestの例外フィルターのユースケースを整理いたします：
+
+1. 標準的なエラーレスポンスのカスタマイズ
+- アプリケーション固有のエラーフォーマットが必要な場合
+- エラーレスポンスにタイムスタンプやリクエストURLなどの追加情報を含める必要がある場合
+```typescript
+{
+  "statusCode": 403,
+  "timestamp": "2024-01-30T12:00:00Z",
+  "path": "/api/cats",
+  "error": "Access forbidden"
+}
+```
+
+2. エラーのログ記録と監視
+- 例外発生時に詳細なログを記録したい場合
+- 特定の例外をモニタリングシステムに通知する必要がある場合
+```typescript
+@Catch(HttpException)
+export class LoggingExceptionFilter implements ExceptionFilter {
+  catch(exception: HttpException, host: ArgumentsHost) {
+    console.error(`Error occurred: ${exception.message}`);
+    // モニタリングシステムへの通知やログ記録の処理
+  }
+}
+```
+
+3. 条件に基づく例外処理
+- API版数によって異なるエラーレスポンスを返す
+- ユーザーの権限レベルに応じて異なるエラー情報を提供する
+```typescript
+@Catch(HttpException)
+export class VersionAwareExceptionFilter implements ExceptionFilter {
+  catch(exception: HttpException, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const request = ctx.getRequest();
+    const apiVersion = request.headers['api-version'];
+    // バージョンに応じた処理
+  }
+}
+```
+
+4. マイクロサービス間のエラー変換
+- 異なるサービス間でエラーフォーマットを統一する
+- 内部的なエラーを適切なHTTPエラーに変換する
+
+5. セキュリティ考慮事項
+- センシティブな情報を含むエラーメッセージのフィルタリング
+- 本番環境でのスタックトレース除去
+```typescript
+@Catch()
+export class ProductionExceptionFilter implements ExceptionFilter {
+  catch(exception: unknown, host: ArgumentsHost) {
+    // 本番環境ではスタックトレースを除去
+    const isProduction = process.env.NODE_ENV === 'production';
+    // ...
+  }
+}
+```
+
+6. 特定のドメイン向けのカスタム例外
+- ビジネスロジック固有の例外クラスの定義
+- ドメイン特有のエラーハンドリング
+```typescript
+export class InvalidOrderException extends HttpException {
+  constructor(orderId: string) {
+    super(`Order ${orderId} is invalid`, HttpStatus.BAD_REQUEST);
+  }
+}
+```
+
+これらのユースケースは、アプリケーションの要件に応じて組み合わせて使用することができ、一貫した例外処理を実現できます。
