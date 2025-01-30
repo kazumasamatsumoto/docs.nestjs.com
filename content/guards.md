@@ -1,18 +1,16 @@
-### Guards
+### ガード
 
-A guard is a class annotated with the `@Injectable()` decorator, which implements the `CanActivate` interface.
+ガードは`@Injectable()`デコレータで装飾され、`CanActivate`インターフェースを実装したクラスです。
 
-<figure><img class="illustrative-image" src="/assets/Guards_1.png" /></figure>
+ガードは**単一の責任**を持ちます。実行時に存在する特定の条件（権限、ロール、ACLなど）に応じて、与えられたリクエストをルートハンドラで処理するかどうかを決定します。これは一般的に**認可**と呼ばれます。認可（およびそれと密接に関連する**認証**）は、従来のExpressアプリケーションでは[ミドルウェア](/middleware)によって処理されてきました。トークンの検証やリクエストオブジェクトへのプロパティの付加は特定のルートコンテキスト（およびそのメタデータ）と強く結びついていないため、ミドルウェアは認証には適しています。
 
-Guards have a **single responsibility**. They determine whether a given request will be handled by the route handler or not, depending on certain conditions (like permissions, roles, ACLs, etc.) present at run-time. This is often referred to as **authorization**. Authorization (and its cousin, **authentication**, with which it usually collaborates) has typically been handled by [middleware](/middleware) in traditional Express applications. Middleware is a fine choice for authentication, since things like token validation and attaching properties to the `request` object are not strongly connected with a particular route context (and its metadata).
+しかし、ミドルウェアは本質的に単純です。`next()`関数を呼び出した後にどのハンドラが実行されるかを知りません。一方、**ガード**は`ExecutionContext`インスタンスにアクセスでき、次に何が実行されるかを正確に把握しています。例外フィルター、パイプ、インターセプターと同様に、リクエスト/レスポンスサイクルの適切なポイントで処理ロジックを宣言的に挿入できるように設計されています。これによりコードをDRYで宣言的に保つことができます。
 
-But middleware, by its nature, is dumb. It doesn't know which handler will be executed after calling the `next()` function. On the other hand, **Guards** have access to the `ExecutionContext` instance, and thus know exactly what's going to be executed next. They're designed, much like exception filters, pipes, and interceptors, to let you interpose processing logic at exactly the right point in the request/response cycle, and to do so declaratively. This helps keep your code DRY and declarative.
+> info **ヒント** ガードは全てのミドルウェアの**後**、かつインターセプターやパイプの**前**に実行されます。
 
-> info **Hint** Guards are executed **after** all middleware, but **before** any interceptor or pipe.
+#### 認可ガード
 
-#### Authorization guard
-
-As mentioned, **authorization** is a great use case for Guards because specific routes should be available only when the caller (usually a specific authenticated user) has sufficient permissions. The `AuthGuard` that we'll build now assumes an authenticated user (and that, therefore, a token is attached to the request headers). It will extract and validate the token, and use the extracted information to determine whether the request can proceed or not.
+前述の通り、**認可**はガードの優れたユースケースです。特定のルートは、呼び出し元（通常は特定の認証されたユーザー）が十分な権限を持っている場合にのみ利用可能であるべきだからです。これから作成する`AuthGuard`は、認証済みのユーザー（したがってトークンがリクエストヘッダーに添付されている）を前提としています。トークンを抽出して検証し、抽出された情報を使用してリクエストを進めることができるかどうかを判断します。
 
 ```typescript
 @@filename(auth.guard)
@@ -40,26 +38,24 @@ export class AuthGuard {
 }
 ```
 
-> info **Hint** If you are looking for a real-world example on how to implement an authentication mechanism in your application, visit [this chapter](/security/authentication). Likewise, for more sophisticated authorization example, check [this page](/security/authorization).
+> info **ヒント** アプリケーションで認証メカニズムを実装する実世界の例をお探しの場合は、[この章](/security/authentication)をご覧ください。同様に、より洗練された認可の例については、[このページ](/security/authorization)をチェックしてください。
 
-The logic inside the `validateRequest()` function can be as simple or sophisticated as needed. The main point of this example is to show how guards fit into the request/response cycle.
+`validateRequest()`関数内のロジックは、必要に応じて単純にも複雑にもできます。この例の主なポイントは、ガードがリクエスト/レスポンスサイクルにどのように適合するかを示すことです。
 
-Every guard must implement a `canActivate()` function. This function should return a boolean, indicating whether the current request is allowed or not. It can return the response either synchronously or asynchronously (via a `Promise` or `Observable`). Nest uses the return value to control the next action:
+全てのガードは`canActivate()`関数を実装する必要があります。この関数は、現在のリクエストが許可されるかどうかを示すブール値を返す必要があります。同期的または非同期的（`Promise`や`Observable`を介して）にレスポンスを返すことができます。Nestは戻り値を使用して次のアクションを制御します：
 
-- if it returns `true`, the request will be processed.
-- if it returns `false`, Nest will deny the request.
+- `true`を返した場合、リクエストは処理されます。
+- `false`を返した場合、Nestはリクエストを拒否します。
 
-<app-banner-enterprise></app-banner-enterprise>
+#### 実行コンテキスト
 
-#### Execution context
+`canActivate()`関数は、`ExecutionContext`インスタンスを単一の引数として取ります。`ExecutionContext`は`ArgumentsHost`を継承します。`ArgumentsHost`については、以前に例外フィルターの章で見ました。上記のサンプルでは、以前使用した`ArgumentsHost`で定義された同じヘルパーメソッドを使用して、`Request`オブジェクトへの参照を取得しています。このトピックの詳細については、例外フィルターの章の**Arguments host**セクションを参照してください。
 
-The `canActivate()` function takes a single argument, the `ExecutionContext` instance. The `ExecutionContext` inherits from `ArgumentsHost`. We saw `ArgumentsHost` previously in the exception filters chapter. In the sample above, we are just using the same helper methods defined on `ArgumentsHost` that we used earlier, to get a reference to the `Request` object. You can refer back to the **Arguments host** section of the [exception filters](https://docs.nestjs.com/exception-filters#arguments-host) chapter for more on this topic.
+`ArgumentsHost`を拡張することで、`ExecutionContext`は現在の実行プロセスに関する追加の詳細を提供する新しいヘルパーメソッドをいくつか追加します。これらの詳細は、広範なコントローラー、メソッド、実行コンテキストで動作できるより汎用的なガードを構築する際に役立ちます。`ExecutionContext`の詳細については[こちら](/fundamentals/execution-context)をご覧ください。
 
-By extending `ArgumentsHost`, `ExecutionContext` also adds several new helper methods that provide additional details about the current execution process. These details can be helpful in building more generic guards that can work across a broad set of controllers, methods, and execution contexts. Learn more about `ExecutionContext` [here](/fundamentals/execution-context).
+#### ロールベースの認証
 
-#### Role-based authentication
-
-Let's build a more functional guard that permits access only to users with a specific role. We'll start with a basic guard template, and build on it in the coming sections. For now, it allows all requests to proceed:
+特定のロールを持つユーザーのみにアクセスを許可する、より機能的なガードを構築しましょう。基本的なガードのテンプレートから始めて、以降のセクションで拡張していきます。現時点では、全てのリクエストの処理を許可します：
 
 ```typescript
 @@filename(roles.guard)
@@ -85,9 +81,9 @@ export class RolesGuard {
 }
 ```
 
-#### Binding guards
+#### ガードのバインディング
 
-Like pipes and exception filters, guards can be **controller-scoped**, method-scoped, or global-scoped. Below, we set up a controller-scoped guard using the `@UseGuards()` decorator. This decorator may take a single argument, or a comma-separated list of arguments. This lets you easily apply the appropriate set of guards with one declaration.
+パイプや例外フィルターと同様に、ガードも**コントローラースコープ**、メソッドスコープ、またはグローバルスコープにすることができます。以下では、`@UseGuards()`デコレータを使用してコントローラースコープのガードを設定します。このデコレータは単一の引数、またはカンマで区切られた引数のリストを取ることができます。これにより、1つの宣言で適切なガードのセットを簡単に適用できます。
 
 ```typescript
 @@filename()
@@ -96,9 +92,9 @@ Like pipes and exception filters, guards can be **controller-scoped**, method-sc
 export class CatsController {}
 ```
 
-> info **Hint** The `@UseGuards()` decorator is imported from the `@nestjs/common` package.
+> info **ヒント** `@UseGuards()`デコレータは`@nestjs/common`パッケージからインポートされます。
 
-Above, we passed the `RolesGuard` class (instead of an instance), leaving responsibility for instantiation to the framework and enabling dependency injection. As with pipes and exception filters, we can also pass an in-place instance:
+上記では、`RolesGuard`クラスをインスタンス化の責任をフレームワークに任せ、依存性の注入を可能にするために、インスタンスではなくクラスを渡しました。パイプや例外フィルターと同様に、インスタンスをその場で渡すこともできます：
 
 ```typescript
 @@filename()
@@ -107,9 +103,9 @@ Above, we passed the `RolesGuard` class (instead of an instance), leaving respon
 export class CatsController {}
 ```
 
-The construction above attaches the guard to every handler declared by this controller. If we wish the guard to apply only to a single method, we apply the `@UseGuards()` decorator at the **method level**.
+上記の構成は、このコントローラーで宣言された全てのハンドラーにガードを適用します。ガードを単一のメソッドにのみ適用したい場合は、`@UseGuards()`デコレータを**メソッドレベル**で適用します。
 
-In order to set up a global guard, use the `useGlobalGuards()` method of the Nest application instance:
+グローバルガードを設定するには、Nestアプリケーションインスタンスの`useGlobalGuards()`メソッドを使用します：
 
 ```typescript
 @@filename()
@@ -117,9 +113,9 @@ const app = await NestFactory.create(AppModule);
 app.useGlobalGuards(new RolesGuard());
 ```
 
-> warning **Notice** In the case of hybrid apps the `useGlobalGuards()` method doesn't set up guards for gateways and microservices by default (see [Hybrid application](/faq/hybrid-application) for information on how to change this behavior). For "standard" (non-hybrid) microservice apps, `useGlobalGuards()` does mount the guards globally.
+> warning **注意** ハイブリッドアプリケーションの場合、`useGlobalGuards()`メソッドはデフォルトではゲートウェイやマイクロサービスに対してガードを設定しません（この動作を変更する方法については[ハイブリッドアプリケーション](/faq/hybrid-application)を参照してください）。「標準的な」（非ハイブリッドの）マイクロサービスアプリケーションでは、`useGlobalGuards()`はガードをグローバルにマウントします。
 
-Global guards are used across the whole application, for every controller and every route handler. In terms of dependency injection, global guards registered from outside of any module (with `useGlobalGuards()` as in the example above) cannot inject dependencies since this is done outside the context of any module. In order to solve this issue, you can set up a guard directly from any module using the following construction:
+グローバルガードは、全てのコントローラーと全てのルートハンドラーに対して、アプリケーション全体で使用されます。依存性の注入に関して、モジュールの外部から登録されたグローバルガード（上記の例のように`useGlobalGuards()`を使用）は、これがモジュールのコンテキスト外で行われるため、依存性を注入することができません。この問題を解決するには、以下の構成を使用して任意のモジュールから直接ガードを設定することができます：
 
 ```typescript
 @@filename(app.module)
@@ -137,18 +133,15 @@ import { APP_GUARD } from '@nestjs/core';
 export class AppModule {}
 ```
 
-> info **Hint** When using this approach to perform dependency injection for the guard, note that regardless of the
-> module where this construction is employed, the guard is, in fact, global. Where should this be done? Choose the module
-> where the guard (`RolesGuard` in the example above) is defined. Also, `useClass` is not the only way of dealing with
-> custom provider registration. Learn more [here](/fundamentals/custom-providers).
+> info **ヒント** このアプローチを使用してガードの依存性注入を実行する場合、この構成が採用されるモジュールに関係なく、ガードは実際にはグローバルであることに注意してください。これはどこで行うべきでしょうか？ガード（上記の例では`RolesGuard`）が定義されているモジュールを選択してください。また、`useClass`はカスタムプロバイダーの登録を扱う唯一の方法ではありません。詳細は[こちら](/fundamentals/custom-providers)をご覧ください。
 
-#### Setting roles per handler
+#### ハンドラーごとのロールの設定
 
-Our `RolesGuard` is working, but it's not very smart yet. We're not yet taking advantage of the most important guard feature - the [execution context](/fundamentals/execution-context). It doesn't yet know about roles, or which roles are allowed for each handler. The `CatsController`, for example, could have different permission schemes for different routes. Some might be available only for an admin user, and others could be open for everyone. How can we match roles to routes in a flexible and reusable way?
+`RolesGuard`は動作していますが、まだあまりスマートではありません。ガードの最も重要な機能である[実行コンテキスト](/fundamentals/execution-context)をまだ活用できていません。ロールについて、また各ハンドラーにどのロールが許可されているかについてまだ把握していません。例えば、`CatsController`は異なるルートに対して異なる権限スキームを持つことができます。一部は管理者ユーザーのみが利用可能で、他は誰でも利用可能かもしれません。柔軟で再利用可能な方法でロールをルートに一致させるにはどうすればよいでしょうか？
 
-This is where **custom metadata** comes into play (learn more [here](https://docs.nestjs.com/fundamentals/execution-context#reflection-and-metadata)). Nest provides the ability to attach custom **metadata** to route handlers through either decorators created via `Reflector#createDecorator` static method, or the built-in `@SetMetadata()` decorator.
+ここで**カスタムメタデータ**が重要になってきます（詳細は[こちら](https://docs.nestjs.com/fundamentals/execution-context#reflection-and-metadata)をご覧ください）。Nestは、`Reflector#createDecorator`静的メソッドを使用して作成されたデコレータ、または組み込みの`@SetMetadata()`デコレータを通じて、ルートハンドラーにカスタム**メタデータ**を付加する機能を提供します。
 
-For example, let's create a `@Roles()` decorator using the `Reflector#createDecorator` method that will attach the metadata to the handler. `Reflector` is provided out of the box by the framework and exposed from the `@nestjs/core` package.
+例えば、`Reflector#createDecorator`メソッドを使用して、メタデータをハンドラーに付加する`@Roles()`デコレータを作成してみましょう。`Reflector`はフレームワークによってあらかじめ提供されており、`@nestjs/core`パッケージから公開されています。
 
 ```ts
 @@filename(roles.decorator)
@@ -157,9 +150,9 @@ import { Reflector } from '@nestjs/core';
 export const Roles = Reflector.createDecorator<string[]>();
 ```
 
-The `Roles` decorator here is a function that takes a single argument of type `string[]`.
+ここでの`Roles`デコレータは、`string[]`型の単一の引数を取る関数です。
 
-Now, to use this decorator, we simply annotate the handler with it:
+このデコレータを使用するには、単にハンドラーに注釈を付けます：
 
 ```typescript
 @@filename(cats.controller)
@@ -177,13 +170,13 @@ async create(createCatDto) {
 }
 ```
 
-Here we've attached the `Roles` decorator metadata to the `create()` method, indicating that only users with the `admin` role should be allowed to access this route.
+ここでは、`create()`メソッドに`Roles`デコレータメタデータを付加し、`admin`ロールを持つユーザーのみがこのルートにアクセスできることを示しています。
 
-Alternatively, instead of using the `Reflector#createDecorator` method, we could use the built-in `@SetMetadata()` decorator. Learn more about [here](/fundamentals/execution-context#low-level-approach).
+あるいは、`Reflector#createDecorator`メソッドを使用する代わりに、組み込みの`@SetMetadata()`デコレータを使用することもできます。詳細は[こちら](/fundamentals/execution-context#low-level-approach)をご覧ください。
 
-#### Putting it all together
+#### 全てを組み合わせる
 
-Let's now go back and tie this together with our `RolesGuard`. Currently, it simply returns `true` in all cases, allowing every request to proceed. We want to make the return value conditional based on comparing the **roles assigned to the current user** to the actual roles required by the current route being processed. In order to access the route's role(s) (custom metadata), we'll use the `Reflector` helper class again, as follows:
+では、これを`RolesGuard`と組み合わせてみましょう。現在は全てのケースで単に`true`を返し、全てのリクエストを処理できるようにしています。**現在のユーザーに割り当てられたロール**と、処理中の現在のルートに必要な実際のロールを比較して、戻り値を条件付きにしたいと思います。ルートのロール（カスタムメタデータ）にアクセスするために、再び`Reflector`ヘルパークラスを使用します：
 
 ```typescript
 @@filename(roles.guard)
@@ -205,6 +198,9 @@ export class RolesGuard implements CanActivate {
     return matchRoles(roles, user.roles);
   }
 }
+```
+
+```typescript
 @@switch
 import { Injectable, Dependencies } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -229,13 +225,13 @@ export class RolesGuard {
 }
 ```
 
-> info **Hint** In the node.js world, it's common practice to attach the authorized user to the `request` object. Thus, in our sample code above, we are assuming that `request.user` contains the user instance and allowed roles. In your app, you will probably make that association in your custom **authentication guard** (or middleware). Check [this chapter](/security/authentication) for more information on this topic.
+> info **ヒント** Node.jsの世界では、認可されたユーザーを`request`オブジェクトに付加するのが一般的な慣行です。したがって、上記のサンプルコードでは、`request.user`にユーザーインスタンスと許可されたロールが含まれていることを前提としています。あなたのアプリケーションでは、おそらくカスタムの**認証ガード**（またはミドルウェア）でその関連付けを行うことになるでしょう。このトピックの詳細については[この章](/security/authentication)をチェックしてください。
 
-> warning **Warning** The logic inside the `matchRoles()` function can be as simple or sophisticated as needed. The main point of this example is to show how guards fit into the request/response cycle.
+> warning **警告** `matchRoles()`関数内のロジックは、必要に応じて単純にも複雑にもできます。この例の主なポイントは、ガードがリクエスト/レスポンスサイクルにどのように適合するかを示すことです。
 
-Refer to the <a href="https://docs.nestjs.com/fundamentals/execution-context#reflection-and-metadata">Reflection and metadata</a> section of the **Execution context** chapter for more details on utilizing `Reflector` in a context-sensitive way.
+コンテキストに応じた`Reflector`の利用の詳細については、**実行コンテキスト**の章の<a href="https://docs.nestjs.com/fundamentals/execution-context#reflection-and-metadata">リフレクションとメタデータ</a>セクションを参照してください。
 
-When a user with insufficient privileges requests an endpoint, Nest automatically returns the following response:
+不十分な権限を持つユーザーがエンドポイントをリクエストした場合、Nestは自動的に以下のレスポンスを返します：
 
 ```typescript
 {
@@ -245,12 +241,111 @@ When a user with insufficient privileges requests an endpoint, Nest automaticall
 }
 ```
 
-Note that behind the scenes, when a guard returns `false`, the framework throws a `ForbiddenException`. If you want to return a different error response, you should throw your own specific exception. For example:
+なお、裏側では、ガードが`false`を返した場合、フレームワークは`ForbiddenException`をスローします。異なるエラーレスポンスを返したい場合は、独自の特定の例外をスローする必要があります。例えば：
 
 ```typescript
 throw new UnauthorizedException();
 ```
 
-Any exception thrown by a guard will be handled by the [exceptions layer](/exception-filters) (global exceptions filter and any exceptions filters that are applied to the current context).
+ガードによってスローされた例外は、[例外レイヤー](/exception-filters)（グローバル例外フィルターと現在のコンテキストに適用される例外フィルター）によって処理されます。
 
-> info **Hint** If you are looking for a real-world example on how to implement authorization, check [this chapter](/security/authorization).
+> info **ヒント** 認可を実装する実世界の例をお探しの場合は、[この章](/security/authorization)をチェックしてください。
+
+ガードの一般的なユースケースをご紹介します：
+
+1. 認証（Authentication）
+```typescript
+@Injectable()
+export class AuthGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest();
+    // JWTトークンの検証
+    return validateAuthToken(request.headers.authorization);
+  }
+}
+```
+- ユーザーが正当な認証トークンを持っているか確認
+- 未認証ユーザーのアクセスを制限
+
+2. ロールベースの認可（Role-based Authorization）
+```typescript
+@Injectable()
+export class AdminGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest();
+    const user = request.user;
+    return user && user.role === 'admin';
+  }
+}
+```
+- 管理者専用のエンドポイントの保護
+- 特定のロールを持つユーザーのみアクセス可能
+
+3. APIレート制限（Rate Limiting）
+```typescript
+@Injectable()
+export class ThrottlerGuard implements CanActivate {
+  constructor(private readonly limiter: RateLimiterService) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
+    const clientIp = request.ip;
+    return this.limiter.checkRate(clientIp);
+  }
+}
+```
+- APIの呼び出し回数を制限
+- DDoS攻撃の防止
+
+4. リソースアクセス制御（Resource Access Control）
+```typescript
+@Injectable()
+export class ResourceOwnerGuard implements CanActivate {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
+    const user = request.user;
+    const resourceId = request.params.id;
+    
+    return this.checkResourceOwnership(user.id, resourceId);
+  }
+}
+```
+- ユーザーが自分のリソースのみにアクセスできることを保証
+- 他のユーザーのデータへの不正アクセスを防止
+
+5. 環境ベースの制限（Environment-based Restrictions）
+```typescript
+@Injectable()
+export class ProductionGuard implements CanActivate {
+  canActivate(): boolean {
+    return process.env.NODE_ENV !== 'production';
+  }
+}
+```
+- 特定の環境でのみ利用可能なエンドポイントの制御
+- 開発用エンドポイントの本番環境での無効化
+
+6. 時間ベースのアクセス制御（Time-based Access Control）
+```typescript
+@Injectable()
+export class BusinessHoursGuard implements CanActivate {
+  canActivate(): boolean {
+    const currentHour = new Date().getHours();
+    return currentHour >= 9 && currentHour < 17; // 9AM-5PM
+  }
+}
+```
+- 特定の時間帯のみアクセス可能
+- メンテナンス時間中のアクセス制限
+
+これらのガードは単独で使用することも、`@UseGuards()`デコレータを使用して組み合わせることも可能です：
+
+```typescript
+@Controller('admin')
+@UseGuards(AuthGuard, AdminGuard, BusinessHoursGuard)
+export class AdminController {
+  // 認証済み、管理者権限持ち、営業時間内のユーザーのみアクセス可能
+}
+```
+
+これらのユースケースは、アプリケーションのセキュリティと制御を強化するための基本的な実装例です。実際のアプリケーションでは、これらを基にして、より詳細なビジネスロジックや要件に合わせてカスタマイズすることができます。
