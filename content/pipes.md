@@ -1,25 +1,25 @@
-### Pipes
+# パイプ
 
-A pipe is a class annotated with the `@Injectable()` decorator, which implements the `PipeTransform` interface.
+パイプは `@Injectable()` デコレータでアノテーションされ、`PipeTransform` インターフェースを実装したクラスです。
 
 <figure>
   <img class="illustrative-image" src="/assets/Pipe_1.png" />
 </figure>
 
-Pipes have two typical use cases:
+パイプには2つの一般的なユースケースがあります:
 
-- **transformation**: transform input data to the desired form (e.g., from string to integer)
-- **validation**: evaluate input data and if valid, simply pass it through unchanged; otherwise, throw an exception
+- **変換**: 入力データを目的の形式に変換します(例: 文字列から整数へ)
+- **バリデーション**: 入力データを評価し、有効な場合はそのまま通過させます。無効な場合は例外をスローします
 
-In both cases, pipes operate on the `arguments` being processed by a <a href="controllers#route-parameters">controller route handler</a>. Nest interposes a pipe just before a method is invoked, and the pipe receives the arguments destined for the method and operates on them. Any transformation or validation operation takes place at that time, after which the route handler is invoked with any (potentially) transformed arguments.
+どちらの場合も、パイプはコントローラーのルートハンドラーによって処理される引数に対して動作します。Nestはメソッドが呼び出される直前にパイプを介在させ、そのメソッドに渡される引数を受け取って操作します。変換やバリデーションの処理はその時点で行われ、その後(潜在的に)変換された引数でルートハンドラーが呼び出されます。
 
-Nest comes with a number of built-in pipes that you can use out-of-the-box. You can also build your own custom pipes. In this chapter, we'll introduce the built-in pipes and show how to bind them to route handlers. We'll then examine several custom-built pipes to show how you can build one from scratch.
+Nestには、すぐに使える組み込みパイプがいくつか用意されています。また、独自のカスタムパイプを作成することもできます。この章では、組み込みパイプを紹介し、それらをルートハンドラーにバインドする方法を説明します。その後、いくつかのカスタムパイプの実装を見て、ゼロからパイプを構築する方法を説明します。
 
-> info **Hint** Pipes run inside the exceptions zone. This means that when a Pipe throws an exception it is handled by the exceptions layer (global exceptions filter and any [exceptions filters](/exception-filters) that are applied to the current context). Given the above, it should be clear that when an exception is thrown in a Pipe, no controller method is subsequently executed. This gives you a best-practice technique for validating data coming into the application from external sources at the system boundary.
+> info **ヒント** パイプは例外ゾーン内で実行されます。つまり、パイプが例外をスローすると、例外レイヤー(グローバル例外フィルターと、現在のコンテキストに適用されている[例外フィルター](/exception-filters))によって処理されます。これを踏まえると、パイプで例外がスローされた場合、コントローラーメソッドは実行されないことが明確になります。これにより、外部ソースからアプリケーションに入ってくるデータを、システムの境界でバリデーションするためのベストプラクティス手法が得られます。
 
-#### Built-in pipes
+#### 組み込みパイプ
 
-Nest comes with several pipes available out-of-the-box:
+Nestには以下のパイプが最初から用意されています:
 
 - `ValidationPipe`
 - `ParseIntPipe`
@@ -32,13 +32,13 @@ Nest comes with several pipes available out-of-the-box:
 - `ParseFilePipe`
 - `ParseDatePipe`
 
-They're exported from the `@nestjs/common` package.
+これらは `@nestjs/common` パッケージからエクスポートされています。
 
-Let's take a quick look at using `ParseIntPipe`. This is an example of the **transformation** use case, where the pipe ensures that a method handler parameter is converted to a JavaScript integer (or throws an exception if the conversion fails). Later in this chapter, we'll show a simple custom implementation for a `ParseIntPipe`. The example techniques below also apply to the other built-in transformation pipes (`ParseBoolPipe`, `ParseFloatPipe`, `ParseEnumPipe`, `ParseArrayPipe`, `ParseDatePipe`, and `ParseUUIDPipe`, which we'll refer to as the `Parse*` pipes in this chapter).
+`ParseIntPipe` の使用例を簡単に見てみましょう。これは**変換**ユースケースの例で、メソッドハンドラーのパラメータがJavaScriptの整数に変換されることを保証します(変換に失敗した場合は例外をスローします)。この章の後半で、`ParseIntPipe` の簡単な独自実装を示します。以下の例のテクニックは、他の組み込み変換パイプ(`ParseBoolPipe`、`ParseFloatPipe`、`ParseEnumPipe`、`ParseArrayPipe`、`ParseDatePipe`、`ParseUUIDPipe` - この章では`Parse*`パイプと呼びます)にも適用できます。
 
-#### Binding pipes
+#### パイプのバインド
 
-To use a pipe, we need to bind an instance of the pipe class to the appropriate context. In our `ParseIntPipe` example, we want to associate the pipe with a particular route handler method, and make sure it runs before the method is called. We do so with the following construct, which we'll refer to as binding the pipe at the method parameter level:
+パイプを使用するには、パイプクラスのインスタンスを適切なコンテキストにバインドする必要があります。`ParseIntPipe` の例では、パイプを特定のルートハンドラーメソッドに関連付け、メソッドが呼び出される前に実行されるようにします。これは以下のような構文で行います。これをメソッドパラメータレベルでのパイプのバインドと呼びます:
 
 ```typescript
 @Get(':id')
@@ -47,15 +47,15 @@ async findOne(@Param('id', ParseIntPipe) id: number) {
 }
 ```
 
-This ensures that one of the following two conditions is true: either the parameter we receive in the `findOne()` method is a number (as expected in our call to `this.catsService.findOne()`), or an exception is thrown before the route handler is called.
+これにより、以下の2つの条件のいずれかが真であることが保証されます: `findOne()` メソッドで受け取るパラメータが数値である(期待通り `this.catsService.findOne()` を呼び出せる)か、ルートハンドラーが呼び出される前に例外がスローされるかのいずれかです。
 
-For example, assume the route is called like:
+例えば、ルートが以下のように呼び出されたとします:
 
 ```bash
 GET localhost:3000/abc
 ```
 
-Nest will throw an exception like this:
+Nestは以下のような例外をスローします:
 
 ```json
 {
@@ -65,9 +65,9 @@ Nest will throw an exception like this:
 }
 ```
 
-The exception will prevent the body of the `findOne()` method from executing.
+この例外により、`findOne()` メソッドの本文は実行されません。
 
-In the example above, we pass a class (`ParseIntPipe`), not an instance, leaving responsibility for instantiation to the framework and enabling dependency injection. As with pipes and guards, we can instead pass an in-place instance. Passing an in-place instance is useful if we want to customize the built-in pipe's behavior by passing options:
+上の例では、インスタンスではなくクラス(`ParseIntPipe`)を渡し、インスタンス化の責任をフレームワークに委ねて依存性注入を可能にしています。パイプやガードと同様に、代わりにインスタンスをインプレースで渡すこともできます。インプレースでインスタンスを渡すのは、組み込みパイプの動作をオプションを渡してカスタマイズしたい場合に便利です:
 
 ```typescript
 @Get(':id')
@@ -79,9 +79,9 @@ async findOne(
 }
 ```
 
-Binding the other transformation pipes (all of the **Parse\*** pipes) works similarly. These pipes all work in the context of validating route parameters, query string parameters and request body values.
+他の変換パイプ(すべての**Parse\***パイプ)のバインドも同様に機能します。これらのパイプはすべて、ルートパラメータ、クエリ文字列パラメータ、リクエストボディの値を検証する文脈で動作します。
 
-For example with a query string parameter:
+例えば、クエリ文字列パラメータの場合:
 
 ```typescript
 @Get()
@@ -90,7 +90,7 @@ async findOne(@Query('id', ParseIntPipe) id: number) {
 }
 ```
 
-Here's an example of using the `ParseUUIDPipe` to parse a string parameter and validate if it is a UUID.
+以下は `ParseUUIDPipe` を使用して文字列パラメータをパースし、UUIDであるかを検証する例です:
 
 ```typescript
 @@filename()
@@ -106,17 +106,17 @@ async findOne(uuid) {
 }
 ```
 
-> info **Hint** When using `ParseUUIDPipe()` you are parsing UUID in version 3, 4 or 5, if you only require a specific version of UUID you can pass a version in the pipe options.
+> info **ヒント** `ParseUUIDPipe()` を使用すると、バージョン3、4、5のUUIDをパースできます。特定のバージョンのUUIDのみを要求する場合は、パイプのオプションでバージョンを指定できます。
 
-Above we've seen examples of binding the various `Parse*` family of built-in pipes. Binding validation pipes is a little bit different; we'll discuss that in the following section.
+ここまでで、様々な `Parse*` 系の組み込みパイプのバインドの例を見てきました。バリデーションパイプのバインドは少し異なります。これについては次のセクションで説明します。
 
-> info **Hint** Also, see [Validation techniques](/techniques/validation) for extensive examples of validation pipes.
+> info **ヒント** バリデーションパイプの詳細な例については、[バリデーション手法](/techniques/validation)も参照してください。
 
-#### Custom pipes
+#### カスタムパイプ
 
-As mentioned, you can build your own custom pipes. While Nest provides a robust built-in `ParseIntPipe` and `ValidationPipe`, let's build simple custom versions of each from scratch to see how custom pipes are constructed.
+前述のように、独自のカスタムパイプを作成することができます。Nestは堅牢な組み込みの `ParseIntPipe` と `ValidationPipe` を提供していますが、それぞれの簡単なバージョンをゼロから構築してカスタムパイプの作成方法を見てみましょう。
 
-We start with a simple `ValidationPipe`. Initially, we'll have it simply take an input value and immediately return the same value, behaving like an identity function.
+まずは簡単な `ValidationPipe` から始めます。最初は、入力値を受け取ってすぐに同じ値を返す、恒等関数のように動作するようにします:
 
 ```typescript
 @@filename(validation.pipe)
@@ -139,14 +139,14 @@ export class ValidationPipe {
 }
 ```
 
-> info **Hint** `PipeTransform<T, R>` is a generic interface that must be implemented by any pipe. The generic interface uses `T` to indicate the type of the input `value`, and `R` to indicate the return type of the `transform()` method.
+> info **ヒント** `PipeTransform<T, R>` は、パイプが実装しなければならないジェネリックインターフェースです。ジェネリックインターフェースは、入力の `value` の型を示す `T` と、`transform()` メソッドの戻り値の型を示す `R` を使用します。
 
-Every pipe must implement the `transform()` method to fulfill the `PipeTransform` interface contract. This method has two parameters:
+すべてのパイプは、`PipeTransform` インターフェースの契約を満たすために `transform()` メソッドを実装する必要があります。このメソッドには2つのパラメータがあります:
 
 - `value`
 - `metadata`
 
-The `value` parameter is the currently processed method argument (before it is received by the route handling method), and `metadata` is the currently processed method argument's metadata. The metadata object has these properties:
+`value` パラメータは現在処理中のメソッド引数(ルートハンドラーメソッドによって受け取られる前)で、`metadata` は現在処理中のメソッド引数のメタデータです。メタデータオブジェクトには以下のプロパティがあります:
 
 ```typescript
 export interface ArgumentMetadata {
@@ -156,44 +156,36 @@ export interface ArgumentMetadata {
 }
 ```
 
-These properties describe the currently processed argument.
+これらのプロパティは現在処理中の引数を記述します:
 
 <table>
   <tr>
     <td>
       <code>type</code>
     </td>
-    <td>Indicates whether the argument is a body
-      <code>@Body()</code>, query
-      <code>@Query()</code>, param
-      <code>@Param()</code>, or a custom parameter (read more
-      <a routerLink="/custom-decorators">here</a>).</td>
+    <td>引数が body <code>@Body()</code>、query <code>@Query()</code>、param <code>@Param()</code>、またはカスタムパラメータ(詳細は<a routerLink="/custom-decorators">こちら</a>)のいずれであるかを示します。</td>
   </tr>
   <tr>
     <td>
       <code>metatype</code>
     </td>
     <td>
-      Provides the metatype of the argument, for example,
-      <code>String</code>. Note: the value is
-      <code>undefined</code> if you either omit a type declaration in the route handler method signature, or use vanilla JavaScript.
+      引数のメタタイプ(例: <code>String</code>)を提供します。注意: ルートハンドラーメソッドのシグネチャで型宣言を省略するか、バニラJavaScriptを使用する場合、値は <code>undefined</code> になります。
     </td>
   </tr>
   <tr>
     <td>
       <code>data</code>
     </td>
-    <td>The string passed to the decorator, for example
-      <code>@Body('string')</code>. It's
-      <code>undefined</code> if you leave the decorator parenthesis empty.</td>
+    <td>デコレータに渡された文字列(例: <code>@Body('string')</code>)です。デコレータの括弧を空にした場合は <code>undefined</code> になります。</td>
   </tr>
 </table>
 
-> warning **Warning** TypeScript interfaces disappear during transpilation. Thus, if a method parameter's type is declared as an interface instead of a class, the `metatype` value will be `Object`.
+> warning **警告** TypeScriptのインターフェースはトランスパイル時に消えます。そのため、メソッドパラメータの型がクラスではなくインターフェースとして宣言されている場合、`metatype` の値は `Object` になります。
 
-#### Schema based validation
+#### スキーマベースのバリデーション
 
-Let's make our validation pipe a little more useful. Take a closer look at the `create()` method of the `CatsController`, where we probably would like to ensure that the post body object is valid before attempting to run our service method.
+バリデーションパイプをもう少し便利にしてみましょう。`CatsController` の `create()` メソッドをよく見てみると、サービスメソッドを実行しようとする前にポストボディオブジェクトが有効であることを確認したいと思うでしょう。
 
 ```typescript
 @@filename()
@@ -208,7 +200,7 @@ async create(@Body() createCatDto) {
 }
 ```
 
-Let's focus in on the `createCatDto` body parameter. Its type is `CreateCatDto`:
+ボディパラメータ `createCatDto` に注目しましょう。その型は `CreateCatDto` です:
 
 ```typescript
 @@filename(create-cat.dto)
@@ -219,33 +211,29 @@ export class CreateCatDto {
 }
 ```
 
-We want to ensure that any incoming request to the create method contains a valid body. So we have to validate the three members of the `createCatDto` object. We could do this inside the route handler method, but doing so is not ideal as it would break the **single responsibility principle** (SRP).
+createメソッドに対する受信リクエストが有効なボディを含んでいることを確認したいと思います。そのため、`createCatDto` オブジェクトの3つのメンバーを検証する必要があります。これはルートハンドラーメソッド内で行うことができますが、そうすると**単一責任の原則**(SRP)に違反してしまいます。
 
-Another approach could be to create a **validator class** and delegate the task there. This has the disadvantage that we would have to remember to call this validator at the beginning of each method.
+別のアプローチとして、**バリデータクラス**を作成してそこにタスクを委譲することもできます。これには、各メソッドの先頭でこのバリデータを呼び出すことを忘れないようにしなければならないという欠点があります。
 
-How about creating validation middleware? This could work, but unfortunately, it's not possible to create **generic middleware** which can be used across all contexts across the whole application. This is because middleware is unaware of the **execution context**, including the handler that will be called and any of its parameters.
+バリデーションミドルウェアを作成するのはどうでしょうか? これは機能する可能性はありますが、残念ながらアプリケーション全体のすべてのコンテキストで使用できる**汎用ミドルウェア**を作成することは不可能です。これは、ミドルウェアが呼び出されるハンドラーやそのパラメータなどの**実行コンテキスト**を認識できないためです。
 
-This is, of course, exactly the use case for which pipes are designed. So let's go ahead and refine our validation pipe.
+もちろん、これはまさにパイプが設計されたユースケースです。では、バリデーションパイプを改良してみましょう。
 
 <app-banner-courses></app-banner-courses>
 
-#### Object schema validation
+#### オブジェクトスキーマバリデーション
 
-There are several approaches available for doing object validation in a clean, [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself) way. One common approach is to use **schema-based** validation. Let's go ahead and try that approach.
+クリーンで[DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself)な方法でオブジェクトバリデーションを行うためのアプローチがいくつかあります。一般的なアプローチの1つは**スキーマベース**のバリデーションです。このアプローチを試してみましょう。
 
-The [Zod](https://zod.dev/) library allows you to create schemas in a straightforward way, with a readable API. Let's build a validation pipe that makes use of Zod-based schemas.
+[Zod](https://zod.dev/)ライブラリを使用すると、読みやすいAPIで簡単にスキーマを作成できます。Zodベースのスキーマを使用するバリデーションパイプを作成してみましょう。
 
-Start by installing the required package:
+必要なパッケージをインストールすることから始めます:
 
 ```bash
 $ npm install --save zod
 ```
 
-In the code sample below, we create a simple class that takes a schema as a `constructor` argument. We then apply the `schema.parse()` method, which validates our incoming argument against the provided schema.
-
-As noted earlier, a **validation pipe** either returns the value unchanged or throws an exception.
-
-In the next section, you'll see how we supply the appropriate schema for a given controller method using the `@UsePipes()` decorator. Doing so makes our validation pipe reusable across contexts, just as we set out to do.
+以下のコードサンプルでは、`constructor` 引数としてスキーマを受け取る簡単なクラスを作成します。次に、提供されたスキーマに対して受信引数を検証する。
 
 ```typescript
 @@filename()
@@ -279,22 +267,21 @@ export class ZodValidationPipe {
     }
   }
 }
-
 ```
 
-#### Binding validation pipes
+#### バリデーションパイプのバインド
 
-Earlier, we saw how to bind transformation pipes (like `ParseIntPipe` and the rest of the `Parse*` pipes).
+先ほど、変換パイプ(`ParseIntPipe`や他の`Parse*`パイプなど)のバインド方法を見ました。
 
-Binding validation pipes is also very straightforward.
+バリデーションパイプのバインドも非常に簡単です。
 
-In this case, we want to bind the pipe at the method call level. In our current example, we need to do the following to use the `ZodValidationPipe`:
+この場合、`ZodValidationPipe`を使用するために以下のことを行う必要があります：
 
-1. Create an instance of the `ZodValidationPipe`
-2. Pass the context-specific Zod schema in the class constructor of the pipe
-3. Bind the pipe to the method
+1. `ZodValidationPipe`のインスタンスを作成する
+2. パイプのクラスコンストラクタでコンテキスト固有のZodスキーマを渡す
+3. パイプをメソッドにバインドする
 
-Zod schema example:
+Zodスキーマの例:
 
 ```typescript
 import { z } from 'zod';
@@ -310,7 +297,7 @@ export const createCatSchema = z
 export type CreateCatDto = z.infer<typeof createCatSchema>;
 ```
 
-We do that using the `@UsePipes()` decorator as shown below:
+以下のように`@UsePipes()`デコレータを使用してバインドします：
 
 ```typescript
 @@filename(cats.controller)
@@ -328,23 +315,23 @@ async create(createCatDto) {
 }
 ```
 
-> info **Hint** The `@UsePipes()` decorator is imported from the `@nestjs/common` package.
+> info **ヒント** `@UsePipes()`デコレータは`@nestjs/common`パッケージからインポートされます。
 
-> warning **Warning** `zod` library requires the `strictNullChecks` configuration to be enabled in your `tsconfig.json` file.
+> warning **警告** `zod`ライブラリを使用するには、`tsconfig.json`ファイルで`strictNullChecks`設定を有効にする必要があります。
 
-#### Class validator
+#### クラスバリデータ
 
-> warning **Warning** The techniques in this section require TypeScript and are not available if your app is written using vanilla JavaScript.
+> warning **警告** このセクションの手法はTypeScriptを必要とし、バニラJavaScriptで書かれたアプリケーションでは利用できません。
 
-Let's look at an alternate implementation for our validation technique.
+バリデーション技法の別の実装を見てみましょう。
 
-Nest works well with the [class-validator](https://github.com/typestack/class-validator) library. This powerful library allows you to use decorator-based validation. Decorator-based validation is extremely powerful, especially when combined with Nest's **Pipe** capabilities since we have access to the `metatype` of the processed property. Before we start, we need to install the required packages:
+Nestは[class-validator](https://github.com/typestack/class-validator)ライブラリとの相性が良いです。このパワフルなライブラリを使用すると、デコレータベースのバリデーションが可能になります。デコレータベースのバリデーションは、特にNestの**Pipe**機能と組み合わせると非常に強力です。なぜなら、処理されるプロパティの`metatype`にアクセスできるためです。始める前に、必要なパッケージをインストールする必要があります：
 
 ```bash
 $ npm i --save class-validator class-transformer
 ```
 
-Once these are installed, we can add a few decorators to the `CreateCatDto` class. Here we see a significant advantage of this technique: the `CreateCatDto` class remains the single source of truth for our Post body object (rather than having to create a separate validation class).
+これらをインストールしたら、`CreateCatDto`クラスにいくつかのデコレータを追加できます。ここでこの手法の大きな利点が見えます：`CreateCatDto`クラスは、Postボディオブジェクトの唯一の情報源として維持されます（別のバリデーションクラスを作成する必要はありません）。
 
 ```typescript
 @@filename(create-cat.dto)
@@ -362,9 +349,9 @@ export class CreateCatDto {
 }
 ```
 
-> info **Hint** Read more about the class-validator decorators [here](https://github.com/typestack/class-validator#usage).
+> info **ヒント** class-validatorデコレータについての詳細は[こちら](https://github.com/typestack/class-validator#usage)をご覧ください。
 
-Now we can create a `ValidationPipe` class that uses these annotations.
+これでこれらのアノテーションを使用する`ValidationPipe`クラスを作成できます。
 
 ```typescript
 @@filename(validation.pipe)
@@ -393,159 +380,34 @@ export class ValidationPipe implements PipeTransform<any> {
 }
 ```
 
-> info **Hint** As a reminder, you don't have to build a generic validation pipe on your own since the `ValidationPipe` is provided by Nest out-of-the-box. The built-in `ValidationPipe` offers more options than the sample we built in this chapter, which has been kept basic for the sake of illustrating the mechanics of a custom-built pipe. You can find full details, along with lots of examples [here](/techniques/validation).
+> info **ヒント** 繰り返しになりますが、汎用のバリデーションパイプを自分で構築する必要はありません。`ValidationPipe`はNestによってすぐに使える形で提供されています。この章で構築したサンプルよりも、組み込みの`ValidationPipe`の方が多くのオプションを提供しています。このサンプルは、カスタムビルドパイプの仕組みを説明するために基本的なものにとどめています。詳細な情報と多くの例は[こちら](/techniques/validation)で見つけることができます。
 
-> warning **Notice** We used the [class-transformer](https://github.com/typestack/class-transformer) library above which is made by the same author as the **class-validator** library, and as a result, they play very well together.
 
-Let's go through this code. First, note that the `transform()` method is marked as `async`. This is possible because Nest supports both synchronous and **asynchronous** pipes. We make this method `async` because some of the class-validator validations [can be async](https://github.com/typestack/class-validator#custom-validation-classes) (utilize Promises).
+この単元「パイプ」の主要なユースケースを以下にまとめます：
 
-Next note that we are using destructuring to extract the metatype field (extracting just this member from an `ArgumentMetadata`) into our `metatype` parameter. This is just shorthand for getting the full `ArgumentMetadata` and then having an additional statement to assign the metatype variable.
 
-Next, note the helper function `toValidate()`. It's responsible for bypassing the validation step when the current argument being processed is a native JavaScript type (these can't have validation decorators attached, so there's no reason to run them through the validation step).
 
-Next, we use the class-transformer function `plainToInstance()` to transform our plain JavaScript argument object into a typed object so that we can apply validation. The reason we must do this is that the incoming post body object, when deserialized from the network request, does **not have any type information** (this is the way the underlying platform, such as Express, works). Class-validator needs to use the validation decorators we defined for our DTO earlier, so we need to perform this transformation to treat the incoming body as an appropriately decorated object, not just a plain vanilla object.
+1. **データ変換のユースケース**
+   - 文字列から整数への変換（ParseIntPipe）
+   - 文字列からブーリアンへの変換（ParseBoolPipe）
+   - 文字列からUUIDへの変換と検証（ParseUUIDPipe）
+   - 文字列から日付への変換（ParseDatePipe）
+   - 配列データの解析（ParseArrayPipe）
 
-Finally, as noted earlier, since this is a **validation pipe** it either returns the value unchanged, or throws an exception.
+2. **バリデーションのユースケース**
+   - リクエストボディのバリデーション
+   - DTOの検証（CreateCatDtoなどの入力データの検証）
+   - スキーマベースのバリデーション（Zodを使用）
+   - デコレータベースのバリデーション（class-validatorを使用）
 
-The last step is to bind the `ValidationPipe`. Pipes can be parameter-scoped, method-scoped, controller-scoped, or global-scoped. Earlier, with our Zod-based validation pipe, we saw an example of binding the pipe at the method level.
-In the example below, we'll bind the pipe instance to the route handler `@Body()` decorator so that our pipe is called to validate the post body.
+3. **パイプのスコープ別使用例**
+   - パラメータスコープ（特定のパラメータに対するバリデーション）
+   - メソッドスコープ（特定のルートハンドラーに対するバリデーション）
+   - グローバルスコープ（アプリケーション全体でのバリデーション）
 
-```typescript
-@@filename(cats.controller)
-@Post()
-async create(
-  @Body(new ValidationPipe()) createCatDto: CreateCatDto,
-) {
-  this.catsService.create(createCatDto);
-}
-```
+4. **エラーハンドリングのユースケース**
+   - バリデーション失敗時の例外スロー
+   - カスタムエラーメッセージの提供
+   - HTTPステータスコードのカスタマイズ
 
-Parameter-scoped pipes are useful when the validation logic concerns only one specified parameter.
-
-#### Global scoped pipes
-
-Since the `ValidationPipe` was created to be as generic as possible, we can realize its full utility by setting it up as a **global-scoped** pipe so that it is applied to every route handler across the entire application.
-
-```typescript
-@@filename(main)
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  app.useGlobalPipes(new ValidationPipe());
-  await app.listen(process.env.PORT ?? 3000);
-}
-bootstrap();
-```
-
-> warning **Notice** In the case of <a href="faq/hybrid-application">hybrid apps</a> the `useGlobalPipes()` method doesn't set up pipes for gateways and microservices. For "standard" (non-hybrid) microservice apps, `useGlobalPipes()` does mount pipes globally.
-
-Global pipes are used across the whole application, for every controller and every route handler.
-
-Note that in terms of dependency injection, global pipes registered from outside of any module (with `useGlobalPipes()` as in the example above) cannot inject dependencies since the binding has been done outside the context of any module. In order to solve this issue, you can set up a global pipe **directly from any module** using the following construction:
-
-```typescript
-@@filename(app.module)
-import { Module } from '@nestjs/common';
-import { APP_PIPE } from '@nestjs/core';
-
-@Module({
-  providers: [
-    {
-      provide: APP_PIPE,
-      useClass: ValidationPipe,
-    },
-  ],
-})
-export class AppModule {}
-```
-
-> info **Hint** When using this approach to perform dependency injection for the pipe, note that regardless of the module where this construction is employed, the pipe is, in fact, global. Where should this be done? Choose the module where the pipe (`ValidationPipe` in the example above) is defined. Also, `useClass` is not the only way of dealing with custom provider registration. Learn more [here](/fundamentals/custom-providers).
-
-#### The built-in ValidationPipe
-
-As a reminder, you don't have to build a generic validation pipe on your own since the `ValidationPipe` is provided by Nest out-of-the-box. The built-in `ValidationPipe` offers more options than the sample we built in this chapter, which has been kept basic for the sake of illustrating the mechanics of a custom-built pipe. You can find full details, along with lots of examples [here](/techniques/validation).
-
-#### Transformation use case
-
-Validation isn't the only use case for custom pipes. At the beginning of this chapter, we mentioned that a pipe can also **transform** the input data to the desired format. This is possible because the value returned from the `transform` function completely overrides the previous value of the argument.
-
-When is this useful? Consider that sometimes the data passed from the client needs to undergo some change - for example converting a string to an integer - before it can be properly handled by the route handler method. Furthermore, some required data fields may be missing, and we would like to apply default values. **Transformation pipes** can perform these functions by interposing a processing function between the client request and the request handler.
-
-Here's a simple `ParseIntPipe` which is responsible for parsing a string into an integer value. (As noted above, Nest has a built-in `ParseIntPipe` that is more sophisticated; we include this as a simple example of a custom transformation pipe).
-
-```typescript
-@@filename(parse-int.pipe)
-import { PipeTransform, Injectable, ArgumentMetadata, BadRequestException } from '@nestjs/common';
-
-@Injectable()
-export class ParseIntPipe implements PipeTransform<string, number> {
-  transform(value: string, metadata: ArgumentMetadata): number {
-    const val = parseInt(value, 10);
-    if (isNaN(val)) {
-      throw new BadRequestException('Validation failed');
-    }
-    return val;
-  }
-}
-@@switch
-import { Injectable, BadRequestException } from '@nestjs/common';
-
-@Injectable()
-export class ParseIntPipe {
-  transform(value, metadata) {
-    const val = parseInt(value, 10);
-    if (isNaN(val)) {
-      throw new BadRequestException('Validation failed');
-    }
-    return val;
-  }
-}
-```
-
-We can then bind this pipe to the selected param as shown below:
-
-```typescript
-@@filename()
-@Get(':id')
-async findOne(@Param('id', new ParseIntPipe()) id) {
-  return this.catsService.findOne(id);
-}
-@@switch
-@Get(':id')
-@Bind(Param('id', new ParseIntPipe()))
-async findOne(id) {
-  return this.catsService.findOne(id);
-}
-```
-
-Another useful transformation case would be to select an **existing user** entity from the database using an id supplied in the request:
-
-```typescript
-@@filename()
-@Get(':id')
-findOne(@Param('id', UserByIdPipe) userEntity: UserEntity) {
-  return userEntity;
-}
-@@switch
-@Get(':id')
-@Bind(Param('id', UserByIdPipe))
-findOne(userEntity) {
-  return userEntity;
-}
-```
-
-We leave the implementation of this pipe to the reader, but note that like all other transformation pipes, it receives an input value (an `id`) and returns an output value (a `UserEntity` object). This can make your code more declarative and [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself) by abstracting boilerplate code out of your handler and into a common pipe.
-
-#### Providing defaults
-
-`Parse*` pipes expect a parameter's value to be defined. They throw an exception upon receiving `null` or `undefined` values. To allow an endpoint to handle missing querystring parameter values, we have to provide a default value to be injected before the `Parse*` pipes operate on these values. The `DefaultValuePipe` serves that purpose. Simply instantiate a `DefaultValuePipe` in the `@Query()` decorator before the relevant `Parse*` pipe, as shown below:
-
-```typescript
-@@filename()
-@Get()
-async findAll(
-  @Query('activeOnly', new DefaultValuePipe(false), ParseBoolPipe) activeOnly: boolean,
-  @Query('page', new DefaultValuePipe(0), ParseIntPipe) page: number,
-) {
-  return this.catsService.findAll({ activeOnly, page });
-}
-```
+これらのユースケースは、アプリケーションの入力データの整合性を保証し、型安全性を確保するために重要な役割を果たします。パイプは特にAPIエンドポイントでデータを受け取る際の「門番」として機能し、不正なデータがアプリケーションの核となる部分に到達する前に検証と変換を行います。
