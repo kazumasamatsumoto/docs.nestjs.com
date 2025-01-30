@@ -1,16 +1,16 @@
-### Providers
+### プロバイダー
 
-Providers are a core concept in Nest. Many of the basic Nest classes, such as services, repositories, factories, and helpers, can be treated as providers. The key idea behind a provider is that it can be **injected** as a dependency, allowing objects to form various relationships with each other. The responsibility of "wiring up" these objects is largely handled by the Nest runtime system.
+プロバイダーは Nest の核となる概念です。サービス、リポジトリ、ファクトリー、ヘルパーなど、多くの基本的な Nest クラスはプロバイダーとして扱うことができます。プロバイダーの重要な考え方は、依存性として**注入**できることにあり、これによってオブジェクト同士が様々な関係を形成できるようになります。これらのオブジェクトの「配線」の責任は、主に Nest のランタイムシステムが担っています。
 
 <figure><img class="illustrative-image" src="/assets/Components_1.png" /></figure>
 
-In the previous chapter, we created a simple `CatsController`. Controllers should handle HTTP requests and delegate more complex tasks to **providers**. Providers are plain JavaScript classes declared as `providers` in a NestJS module. For more details, refer to the "Modules" chapter.
+前章では、シンプルな`CatsController`を作成しました。コントローラーは HTTP リクエストを処理し、より複雑なタスクを**プロバイダー**に委譲する必要があります。プロバイダーは、NestJS モジュールで`providers`として宣言されるプレーンな JavaScript クラスです。詳細については、「モジュール」の章を参照してください。
 
-> info **Hint** Since Nest enables you to design and organize dependencies in an object-oriented manner, we strongly recommend following the [SOLID principles](https://en.wikipedia.org/wiki/SOLID).
+> info **ヒント** Nest はオブジェクト指向的な方法で依存関係を設計・整理することができるため、[SOLID の原則](https://en.wikipedia.org/wiki/SOLID)に従うことを強く推奨します。
 
-#### Services
+#### サービス
 
-Let's begin by creating a simple `CatsService`. This service will handle data storage and retrieval, and it will be used by the `CatsController`. Because of its role in managing the application's logic, it’s an ideal candidate to be defined as a provider.
+まずは、シンプルな`CatsService`を作成してみましょう。このサービスはデータの保存と取得を処理し、`CatsController`で使用されます。アプリケーションのロジックを管理する役割を持つため、プロバイダーとして定義するのに理想的な候補となります。
 
 ```typescript
 @@filename(cats.service)
@@ -48,11 +48,11 @@ export class CatsService {
 }
 ```
 
-> info **Hint** To create a service using the CLI, simply execute the `$ nest g service cats` command.
+> info **ヒント** CLI を使用してサービスを作成するには、`$ nest g service cats`コマンドを実行するだけです。
 
-Our `CatsService` is a basic class with one property and two methods. The key addition here is the `@Injectable()` decorator. This decorator attaches metadata to the class, signaling that `CatsService` is a class that can be managed by the Nest [IoC](https://en.wikipedia.org/wiki/Inversion_of_control) container.
+`CatsService`は 1 つのプロパティと 2 つのメソッドを持つ基本的なクラスです。ここでの重要な追加点は`@Injectable()`デコレータです。このデコレータはクラスにメタデータを付与し、`CatsService`が Nest の[IoC](https://en.wikipedia.org/wiki/Inversion_of_control)コンテナによって管理できるクラスであることを示します。
 
-Additionally, this example makes use of a `Cat` interface, which likely looks something like this:
+さらに、この例では`Cat`インターフェースを使用しています。これは以下のような形になるでしょう：
 
 ```typescript
 @@filename(interfaces/cat.interface)
@@ -63,7 +63,7 @@ export interface Cat {
 }
 ```
 
-Now that we have a service class to retrieve cats, let's use it inside the `CatsController`:
+猫を取得するためのサービスクラスができたので、これを`CatsController`の中で使用してみましょう：
 
 ```typescript
 @@filename(cats.controller)
@@ -112,31 +112,31 @@ export class CatsController {
 
 The `CatsService` is **injected** through the class constructor. Notice the use of the `private` keyword. This shorthand allows us to both declare and initialize the `catsService` member in the same line, streamlining the process.
 
-#### Dependency injection
+#### 依存性の注入
 
-Nest is built around the powerful design pattern known as **Dependency Injection**. We highly recommend reading a great article about this concept in the official [Angular documentation](https://angular.dev/guide/di).
+Nest は**依存性の注入**として知られる強力な設計パターンを中心に構築されています。この概念については、公式の[Angular ドキュメント](https://angular.dev/guide/di)にある優れた記事を読むことを強くお勧めします。
 
-In Nest, thanks to TypeScript's capabilities, managing dependencies is straightforward because they are resolved based on their type. In the example below, Nest will resolve the `catsService` by creating and returning an instance of `CatsService` (or, in the case of a singleton, returning the existing instance if it has already been requested elsewhere). This dependency is then injected into your controller's constructor (or assigned to the specified property):
+Nest では、TypeScript の機能のおかげで、依存関係の管理が簡単です。これは型に基づいて解決されるためです。以下の例では、Nest は`CatsService`のインスタンスを作成して返すことで`catsService`を解決します（シングルトンの場合、既に他の場所でリクエストされている場合は既存のインスタンスを返します）。この依存関係は、コントローラーのコンストラクタに注入されます（または指定されたプロパティに割り当てられます）：
 
 ```typescript
 constructor(private catsService: CatsService) {}
 ```
 
-#### Scopes
+#### スコープ
 
-Providers typically have a lifetime ("scope") that aligns with the application lifecycle. When the application is bootstrapped, each dependency must be resolved, meaning every provider gets instantiated. Similarly, when the application shuts down, all providers are destroyed. However, it’s also possible to make a provider **request-scoped**, meaning its lifetime is tied to a specific request rather than the application's lifecycle. You can learn more about these techniques in the [Injection Scopes](/fundamentals/injection-scopes) chapter.
+プロバイダーは通常、アプリケーションのライフサイクルに合わせたライフタイム（「スコープ」）を持ちます。アプリケーションが起動すると、各依存関係は解決される必要があり、つまりすべてのプロバイダーがインスタンス化されます。同様に、アプリケーションがシャットダウンすると、すべてのプロバイダーは破棄されます。ただし、プロバイダーを**リクエストスコープ**にすることも可能です。これは、そのライフタイムがアプリケーションのライフサイクルではなく、特定のリクエストに紐付けられることを意味します。これらのテクニックについては、[インジェクションスコープ](/fundamentals/injection-scopes)の章で詳しく学ぶことができます。
 
 <app-banner-courses></app-banner-courses>
 
-#### Custom providers
+#### カスタムプロバイダー
 
-Nest comes with a built-in inversion of control ("IoC") container that manages the relationships between providers. This feature is the foundation of dependency injection, but it’s actually much more powerful than we've covered so far. There are several ways to define a provider: you can use plain values, classes, and both asynchronous or synchronous factories. For more examples of defining providers, check out the [Dependency Injection](/fundamentals/dependency-injection) chapter.
+Nest には、プロバイダー間の関係を管理する組み込みの制御の反転（「IoC」）コンテナが付属しています。この機能は依存性注入の基礎となるものですが、実際にはこれまで説明してきた以上に強力です。プロバイダーを定義する方法は複数あります：プレーンな値、クラス、そして非同期または同期のファクトリーを使用できます。プロバイダーの定義の詳細な例については、[依存性の注入](/fundamentals/dependency-injection)の章をご覧ください。
 
-#### Optional providers
+#### オプショナルプロバイダー
 
-Occasionally, you may have dependencies that don't always need to be resolved. For example, your class might depend on a **configuration object**, but if none is provided, default values should be used. In such cases, the dependency is considered optional, and the absence of the configuration provider should not result in an error.
+時には、必ずしも解決する必要のない依存関係がある場合があります。例えば、クラスが**設定オブジェクト**に依存しているが、それが提供されていない場合はデフォルト値を使用すべき、というような場合です。このような場合、依存関係はオプショナルと見なされ、設定プロバイダーが存在しないことはエラーとはなりません。
 
-To mark a provider as optional, use the `@Optional()` decorator in the constructor's signature.
+プロバイダーをオプショナルとしてマークするには、コンストラクタのシグネチャで`@Optional()`デコレータを使用します。
 
 ```typescript
 import { Injectable, Optional, Inject } from '@nestjs/common';
@@ -147,11 +147,11 @@ export class HttpService<T> {
 }
 ```
 
-In the example above, we're using a custom provider, which is why we include the `HTTP_OPTIONS` custom **token**. Previous examples demonstrated constructor-based injection, where a dependency is indicated through a class in the constructor. For more details on custom providers and how their associated tokens work, check out the [Custom Providers](/fundamentals/custom-providers) chapter.
+上記の例では、カスタムプロバイダーを使用しているため、カスタム**トークン**である`HTTP_OPTIONS`を含めています。これまでの例では、コンストラクタベースの注入を示してきました。これは、依存関係がコンストラクタ内のクラスを通じて示されるものです。カスタムプロバイダーとそれに関連するトークンの仕組みの詳細については、[カスタムプロバイダー](/fundamentals/custom-providers)の章をご覧ください。
 
-#### Property-based injection
+#### プロパティベースの注入
 
-The technique we've used so far is called constructor-based injection, where providers are injected through the constructor method. In certain specific cases, **property-based injection** can be useful. For example, if your top-level class depends on one or more providers, passing them all the way up through `super()` in sub-classes can become cumbersome. To avoid this, you can use the `@Inject()` decorator directly at the property level.
+これまで使用してきた手法は、コンストラクタベースの注入と呼ばれ、プロバイダーはコンストラクタメソッドを通じて注入されます。特定のケースでは、**プロパティベースの注入**が有用な場合があります。例えば、トップレベルのクラスが 1 つ以上のプロバイダーに依存している場合、サブクラスで`super()`を通じてそれらすべてを引き渡すのは面倒になる可能性があります。これを避けるため、プロパティレベルで直接`@Inject()`デコレータを使用できます。
 
 ```typescript
 import { Injectable, Inject } from '@nestjs/common';
@@ -163,11 +163,11 @@ export class HttpService<T> {
 }
 ```
 
-> warning **Warning** If your class doesn't extend another class, it's generally better to use **constructor-based** injection. The constructor clearly specifies which dependencies are required, offering better visibility and making the code easier to understand compared to class properties annotated with `@Inject`.
+> warning **警告** クラスが他のクラスを継承していない場合は、通常**コンストラクタベース**の注入を使用する方が良いでしょう。コンストラクタは必要な依存関係を明確に指定し、`@Inject`でアノテーションされたクラスプロパティと比べて、より良い可視性とコードの理解のしやすさを提供します。
 
-#### Provider registration
+#### プロバイダーの登録
 
-Now that we've defined a provider (`CatsService`) and a consumer (`CatsController`), we need to register the service with Nest so that it can handle the injection. This is done by editing the module file (`app.module.ts`) and adding the service to the `providers` array in the `@Module()` decorator.
+プロバイダー（`CatsService`）とコンシューマー（`CatsController`）を定義したので、注入を処理できるようにサービスを Nest に登録する必要があります。これは、モジュールファイル（`app.module.ts`）を編集し、`@Module()`デコレータの`providers`配列にサービスを追加することで行います。
 
 ```typescript
 @@filename(app.module)
@@ -182,9 +182,9 @@ import { CatsService } from './cats/cats.service';
 export class AppModule {}
 ```
 
-Nest will now be able to resolve the dependencies of the `CatsController` class.
+これで Nest は`CatsController`クラスの依存関係を解決できるようになります。
 
-At this point, our directory structure should look like this:
+この時点で、ディレクトリ構造は以下のようになっているはずです：
 
 <div class="file-tree">
 <div class="item">src</div>
@@ -207,9 +207,9 @@ At this point, our directory structure should look like this:
 </div>
 </div>
 
-#### Manual instantiation
+#### 手動インスタンス化
 
-So far, we've covered how Nest automatically handles most of the details of resolving dependencies. However, in some cases, you might need to step outside of the built-in Dependency Injection system and manually retrieve or instantiate providers. Two such techniques are briefly discussed below.
+これまで、Nest が依存関係の解決の詳細のほとんどを自動的に処理する方法について説明してきました。しかし、場合によっては組み込みの依存性注入システムの外に出て、プロバイダーを手動で取得またはインスタンス化する必要があるかもしれません。そのような技術について、以下で簡単に説明します。
 
-- To retrieve existing instances or instantiate providers dynamically, you can use the [Module reference](https://docs.nestjs.com/fundamentals/module-ref).
-- To get providers within the `bootstrap()` function (e.g., for standalone applications or to use a configuration service during bootstrapping), check out [Standalone applications](https://docs.nestjs.com/standalone-applications).
+- 既存のインスタンスを取得したり、プロバイダーを動的にインスタンス化したりするには、[モジュールリファレンス](https://docs.nestjs.com/fundamentals/module-ref)を使用できます。
+- `bootstrap()`関数内でプロバイダーを取得するには（例：スタンドアロンアプリケーションの場合や、ブートストラップ中に設定サービスを使用する場合）、[スタンドアロンアプリケーション](https://docs.nestjs.com/standalone-applications)をご覧ください。
