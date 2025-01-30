@@ -1,15 +1,17 @@
-### Custom providers
 
-In earlier chapters, we touched on various aspects of **Dependency Injection (DI)** and how it is used in Nest. One example of this is the [constructor based](https://docs.nestjs.com/providers#dependency-injection) dependency injection used to inject instances (often service providers) into classes. You won't be surprised to learn that Dependency Injection is built into the Nest core in a fundamental way. So far, we've only explored one main pattern. As your application grows more complex, you may need to take advantage of the full features of the DI system, so let's explore them in more detail.
 
-#### DI fundamentals
+### カスタムプロバイダー
 
-Dependency injection is an [inversion of control (IoC)](https://en.wikipedia.org/wiki/Inversion_of_control) technique wherein you delegate instantiation of dependencies to the IoC container (in our case, the NestJS runtime system), instead of doing it in your own code imperatively. Let's examine what's happening in this example from the [Providers chapter](https://docs.nestjs.com/providers).
+これまでの章で、**依存性注入(DI)** の様々な側面とその使用方法について触れてきました。その一例として、クラスにインスタンス（多くの場合はサービスプロバイダー）を注入するための[コンストラクタベース](https://docs.nestjs.com/providers#dependency-injection)の依存性注入があります。依存性注入がNestのコアに根本的な方法で組み込まれているということは、驚くことではないでしょう。これまでは主要なパターンを1つだけ見てきました。アプリケーションが複雑になるにつれ、DIシステムの全機能を活用する必要が出てくるかもしれません。そこで、それらについて詳しく見ていきましょう。
 
-First, we define a provider. The `@Injectable()` decorator marks the `CatsService` class as a provider.
+#### DI の基礎
+
+依存性注入は[制御の反転（IoC）](https://en.wikipedia.org/wiki/Inversion_of_control)の手法で、依存関係のインスタンス化を命令的にコードで行うのではなく、IoCコンテナ（この場合はNestJSのランタイムシステム）に委譲します。[プロバイダーの章](https://docs.nestjs.com/providers)の例を見てみましょう。
+
+まず、プロバイダーを定義します。`@Injectable()`デコレータは`CatsService`クラスをプロバイダーとしてマークします。
 
 ```typescript
-@@filename(cats.service)
+// cats.service.ts
 import { Injectable } from '@nestjs/common';
 import { Cat } from './interfaces/cat.interface';
 
@@ -21,25 +23,12 @@ export class CatsService {
     return this.cats;
   }
 }
-@@switch
-import { Injectable } from '@nestjs/common';
-
-@Injectable()
-export class CatsService {
-  constructor() {
-    this.cats = [];
-  }
-
-  findAll() {
-    return this.cats;
-  }
-}
 ```
 
-Then we request that Nest inject the provider into our controller class:
+次に、Nestにプロバイダーをコントローラークラスに注入するよう要求します：
 
 ```typescript
-@@filename(cats.controller)
+// cats.controller.ts
 import { Controller, Get } from '@nestjs/common';
 import { CatsService } from './cats.service';
 import { Cat } from './interfaces/cat.interface';
@@ -53,28 +42,12 @@ export class CatsController {
     return this.catsService.findAll();
   }
 }
-@@switch
-import { Controller, Get, Bind, Dependencies } from '@nestjs/common';
-import { CatsService } from './cats.service';
-
-@Controller('cats')
-@Dependencies(CatsService)
-export class CatsController {
-  constructor(catsService) {
-    this.catsService = catsService;
-  }
-
-  @Get()
-  async findAll() {
-    return this.catsService.findAll();
-  }
-}
 ```
 
-Finally, we register the provider with the Nest IoC container:
+最後に、プロバイダーをNest IoCコンテナに登録します：
 
 ```typescript
-@@filename(app.module)
+// app.module.ts
 import { Module } from '@nestjs/common';
 import { CatsController } from './cats/cats.controller';
 import { CatsService } from './cats/cats.service';
@@ -86,26 +59,25 @@ import { CatsService } from './cats/cats.service';
 export class AppModule {}
 ```
 
-What exactly is happening under the covers to make this work? There are three key steps in the process:
+これを機能させるために、裏で何が起きているのでしょうか？このプロセスには3つの重要なステップがあります：
 
-1. In `cats.service.ts`, the `@Injectable()` decorator declares the `CatsService` class as a class that can be managed by the Nest IoC container.
-2. In `cats.controller.ts`, `CatsController` declares a dependency on the `CatsService` token with constructor injection:
+1. `cats.service.ts`で、`@Injectable()`デコレータが`CatsService`クラスをNest IoCコンテナで管理できるクラスとして宣言します。
+
+2. `cats.controller.ts`で、`CatsController`がコンストラクタ注入を使用して`CatsService`トークンへの依存関係を宣言します：
 
 ```typescript
-  constructor(private catsService: CatsService)
+constructor(private catsService: CatsService)
 ```
 
-3. In `app.module.ts`, we associate the token `CatsService` with the class `CatsService` from the `cats.service.ts` file. We'll <a href="/fundamentals/custom-providers#standard-providers">see below</a> exactly how this association (also called _registration_) occurs.
+3. `app.module.ts`で、トークン`CatsService`を`cats.service.ts`ファイルの`CatsService`クラスと関連付けます。この関連付け（登録とも呼ばれる）がどのように行われるかは<a href="/fundamentals/custom-providers#standard-providers">以下</a>で説明します。
 
-When the Nest IoC container instantiates a `CatsController`, it first looks for any dependencies\*. When it finds the `CatsService` dependency, it performs a lookup on the `CatsService` token, which returns the `CatsService` class, per the registration step (#3 above). Assuming `SINGLETON` scope (the default behavior), Nest will then either create an instance of `CatsService`, cache it, and return it, or if one is already cached, return the existing instance.
+Nest IoCコンテナが`CatsController`をインスタンス化する際、まず依存関係を探します。`CatsService`依存関係を見つけると、`CatsService`トークンの検索を実行し、登録ステップ（上記の#3）に従って`CatsService`クラスを返します。`SINGLETON`スコープ（デフォルトの動作）を想定すると、Nestは`CatsService`のインスタンスを作成してキャッシュし、それを返すか、すでにキャッシュされている場合は既存のインスタンスを返します。
 
-\*This explanation is a bit simplified to illustrate the point. One important area we glossed over is that the process of analyzing the code for dependencies is very sophisticated, and happens during application bootstrapping. One key feature is that dependency analysis (or "creating the dependency graph"), is **transitive**. In the above example, if the `CatsService` itself had dependencies, those too would be resolved. The dependency graph ensures that dependencies are resolved in the correct order - essentially "bottom up". This mechanism relieves the developer from having to manage such complex dependency graphs.
+*この説明は要点を説明するために少し簡略化されています。重要な点として、依存関係のコード分析のプロセスは非常に高度で、アプリケーションの起動時に行われます。重要な機能の1つは、依存関係の分析（または「依存関係グラフの作成」）が**推移的**であるということです。上記の例では、`CatsService`自体に依存関係があった場合、それらも解決されます。依存関係グラフは、依存関係が正しい順序で解決されることを保証します - 基本的に「ボトムアップ」です。このメカニズムにより、開発者はこのような複雑な依存関係グラフを管理する必要がなくなります。
 
-<app-banner-courses></app-banner-courses>
+#### 標準プロバイダー
 
-#### Standard providers
-
-Let's take a closer look at the `@Module()` decorator. In `app.module`, we declare:
+`@Module()`デコレータをより詳しく見てみましょう。`app.module`では、以下のように宣言しています：
 
 ```typescript
 @Module({
@@ -114,7 +86,7 @@ Let's take a closer look at the `@Module()` decorator. In `app.module`, we decla
 })
 ```
 
-The `providers` property takes an array of `providers`. So far, we've supplied those providers via a list of class names. In fact, the syntax `providers: [CatsService]` is short-hand for the more complete syntax:
+`providers`プロパティは`providers`の配列を受け取ります。これまで、クラス名のリストでこれらのプロバイダーを提供してきました。実際、`providers: [CatsService]`の構文は、より完全な構文の省略形です：
 
 ```typescript
 providers: [
@@ -125,29 +97,29 @@ providers: [
 ];
 ```
 
-Now that we see this explicit construction, we can understand the registration process. Here, we are clearly associating the token `CatsService` with the class `CatsService`. The short-hand notation is merely a convenience to simplify the most common use-case, where the token is used to request an instance of a class by the same name.
+この明示的な構造を見ると、登録プロセスを理解できます。ここでは、トークン`CatsService`をクラス`CatsService`と明確に関連付けています。省略形の表記は、トークンが同じ名前のクラスのインスタンスを要求するという最も一般的なユースケースを簡略化するための便利な方法に過ぎません。
 
-#### Custom providers
+#### カスタムプロバイダー
 
-What happens when your requirements go beyond those offered by _Standard providers_? Here are a few examples:
+_標準プロバイダー_が提供する機能以上のものが必要な場合はどうすればよいでしょうか？以下にいくつかの例を示します：
 
-- You want to create a custom instance instead of having Nest instantiate (or return a cached instance of) a class
-- You want to re-use an existing class in a second dependency
-- You want to override a class with a mock version for testing
+- Nestにクラスをインスタンス化させる（またはキャッシュされたインスタンスを返させる）代わりに、カスタムインスタンスを作成したい
+- 既存のクラスを2番目の依存関係で再利用したい
+- テスト用にクラスをモックバージョンで上書きしたい
 
-Nest allows you to define Custom providers to handle these cases. It provides several ways to define custom providers. Let's walk through them.
+Nestではこれらのケースを処理するためのカスタムプロバイダーを定義できます。カスタムプロバイダーを定義するためのいくつかの方法を提供しています。それらを見ていきましょう。
 
-> info **Hint** If you are having problems with dependency resolution you can set the `NEST_DEBUG` environment variable and get extra dependency resolution logs during startup.
+> info **ヒント** 依存関係の解決に問題がある場合は、`NEST_DEBUG`環境変数を設定することで、起動時に追加の依存関係解決ログを取得できます。
 
-#### Value providers: `useValue`
+#### 値プロバイダー：`useValue`
 
-The `useValue` syntax is useful for injecting a constant value, putting an external library into the Nest container, or replacing a real implementation with a mock object. Let's say you'd like to force Nest to use a mock `CatsService` for testing purposes.
+`useValue`構文は、定数値を注入したり、外部ライブラリをNestコンテナに入れたり、実際の実装をモックオブジェクトで置き換えたりする場合に便利です。例えば、テスト目的でNestにモックの`CatsService`を強制的に使用させたい場合を考えてみましょう：
 
 ```typescript
 import { CatsService } from './cats.service';
 
 const mockCatsService = {
-  /* mock implementation
+  /* モック実装
   ...
   */
 };
@@ -164,11 +136,11 @@ const mockCatsService = {
 export class AppModule {}
 ```
 
-In this example, the `CatsService` token will resolve to the `mockCatsService` mock object. `useValue` requires a value - in this case a literal object that has the same interface as the `CatsService` class it is replacing. Because of TypeScript's [structural typing](https://www.typescriptlang.org/docs/handbook/type-compatibility.html), you can use any object that has a compatible interface, including a literal object or a class instance instantiated with `new`.
+この例では、`CatsService`トークンは`mockCatsService`モックオブジェクトに解決されます。`useValue`には値が必要です - この場合、置き換える`CatsService`クラスと同じインターフェースを持つリテラルオブジェクトです。TypeScriptの[構造的型付け](https://www.typescriptlang.org/docs/handbook/type-compatibility.html)のおかげで、リテラルオブジェクトや`new`でインスタンス化されたクラスインスタンスを含む、互換性のあるインターフェースを持つオブジェクトを使用できます。
 
-#### Non-class-based provider tokens
+#### クラスベースではないプロバイダートークン
 
-So far, we've used class names as our provider tokens (the value of the `provide` property in a provider listed in the `providers` array). This is matched by the standard pattern used with [constructor based injection](https://docs.nestjs.com/providers#dependency-injection), where the token is also a class name. (Refer back to <a href="/fundamentals/custom-providers#di-fundamentals">DI Fundamentals</a> for a refresher on tokens if this concept isn't entirely clear). Sometimes, we may want the flexibility to use strings or symbols as the DI token. For example:
+これまで、プロバイダートークン（`providers`配列にリストされているプロバイダーの`provide`プロパティの値）としてクラス名を使用してきました。これは[コンストラクタベースの注入](https://docs.nestjs.com/providers#dependency-injection)で使用される標準パターンと一致します。（トークンの概念が完全に明確でない場合は、<a href="/fundamentals/custom-providers#di-fundamentals">DI の基礎</a>を参照してください）。場合によっては、DIトークンとして文字列やシンボルを使用する柔軟性が必要になることがあります。例えば：
 
 ```typescript
 import { connection } from './connection';
@@ -184,113 +156,31 @@ import { connection } from './connection';
 export class AppModule {}
 ```
 
-In this example, we are associating a string-valued token (`'CONNECTION'`) with a pre-existing `connection` object we've imported from an external file.
+この例では、文字列値のトークン（`'CONNECTION'`）を、外部ファイルからインポートした既存の`connection`オブジェクトと関連付けています。
 
-> warning **Notice** In addition to using strings as token values, you can also use JavaScript [symbols](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol) or TypeScript [enums](https://www.typescriptlang.org/docs/handbook/enums.html).
+> warning **注意** トークン値として文字列を使用することに加えて、JavaScript[シンボル](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol)やTypeScript[列挙型](https://www.typescriptlang.org/docs/handbook/enums.html)も使用できます。
 
-We've previously seen how to inject a provider using the standard [constructor based injection](https://docs.nestjs.com/providers#dependency-injection) pattern. This pattern **requires** that the dependency be declared with a class name. The `'CONNECTION'` custom provider uses a string-valued token. Let's see how to inject such a provider. To do so, we use the `@Inject()` decorator. This decorator takes a single argument - the token.
+これまで、標準の[コンストラクタベースの注入](https://docs.nestjs.com/providers#dependency-injection)パターンを使用してプロバイダーを注入する方法を見てきました。このパターンでは、依存関係をクラス名で宣言する必要があります。`'CONNECTION'`カスタムプロバイダーは文字列値のトークンを使用します。このようなプロバイダーを注入する方法を見てみましょう。そのために、`@Inject()`デコレータを使用します。このデコレータは単一の引数 - トークン - を取ります。
 
 ```typescript
-@@filename()
 @Injectable()
 export class CatsRepository {
   constructor(@Inject('CONNECTION') connection: Connection) {}
 }
-@@switch
-@Injectable()
-@Dependencies('CONNECTION')
-export class CatsRepository {
-  constructor(connection) {}
-}
 ```
 
-> info **Hint** The `@Inject()` decorator is imported from `@nestjs/common` package.
+> info **ヒント** `@Inject()`デコレータは`@nestjs/common`パッケージからインポートされます。
 
-While we directly use the string `'CONNECTION'` in the above examples for illustration purposes, for clean code organization, it's best practice to define tokens in a separate file, such as `constants.ts`. Treat them much as you would symbols or enums that are defined in their own file and imported where needed.
+上記の例では説明のために直接文字列`'CONNECTION'`を使用していますが、クリーンなコード組織化のために、トークンは`constants.ts`のような別のファイルで定義するのがベストプラクティスです。それらを、独自のファイルで定義され、必要な場所でインポートされるシンボルや列挙型と同様に扱います。
 
-#### Class providers: `useClass`
+#### エイリアスプロバイダー：`useExisting`
 
-The `useClass` syntax allows you to dynamically determine a class that a token should resolve to. For example, suppose we have an abstract (or default) `ConfigService` class. Depending on the current environment, we want Nest to provide a different implementation of the configuration service. The following code implements such a strategy.
-
-```typescript
-const configServiceProvider = {
-  provide: ConfigService,
-  useClass:
-    process.env.NODE_ENV === 'development'
-      ? DevelopmentConfigService
-      : ProductionConfigService,
-};
-
-@Module({
-  providers: [configServiceProvider],
-})
-export class AppModule {}
-```
-
-Let's look at a couple of details in this code sample. You'll notice that we define `configServiceProvider` with a literal object first, then pass it in the module decorator's `providers` property. This is just a bit of code organization, but is functionally equivalent to the examples we've used thus far in this chapter.
-
-Also, we have used the `ConfigService` class name as our token. For any class that depends on `ConfigService`, Nest will inject an instance of the provided class (`DevelopmentConfigService` or `ProductionConfigService`) overriding any default implementation that may have been declared elsewhere (e.g., a `ConfigService` declared with an `@Injectable()` decorator).
-
-#### Factory providers: `useFactory`
-
-The `useFactory` syntax allows for creating providers **dynamically**. The actual provider will be supplied by the value returned from a factory function. The factory function can be as simple or complex as needed. A simple factory may not depend on any other providers. A more complex factory can itself inject other providers it needs to compute its result. For the latter case, the factory provider syntax has a pair of related mechanisms:
-
-1. The factory function can accept (optional) arguments.
-2. The (optional) `inject` property accepts an array of providers that Nest will resolve and pass as arguments to the factory function during the instantiation process. Also, these providers can be marked as optional. The two lists should be correlated: Nest will pass instances from the `inject` list as arguments to the factory function in the same order. The example below demonstrates this.
-
-```typescript
-@@filename()
-const connectionProvider = {
-  provide: 'CONNECTION',
-  useFactory: (optionsProvider: MyOptionsProvider, optionalProvider?: string) => {
-    const options = optionsProvider.get();
-    return new DatabaseConnection(options);
-  },
-  inject: [MyOptionsProvider, { token: 'SomeOptionalProvider', optional: true }],
-  //       \______________/             \__________________/
-  //        This provider                The provider with this token
-  //        is mandatory.                can resolve to `undefined`.
-};
-
-@Module({
-  providers: [
-    connectionProvider,
-    MyOptionsProvider, // class-based provider
-    // { provide: 'SomeOptionalProvider', useValue: 'anything' },
-  ],
-})
-export class AppModule {}
-@@switch
-const connectionProvider = {
-  provide: 'CONNECTION',
-  useFactory: (optionsProvider, optionalProvider) => {
-    const options = optionsProvider.get();
-    return new DatabaseConnection(options);
-  },
-  inject: [MyOptionsProvider, { token: 'SomeOptionalProvider', optional: true }],
-  //       \______________/            \__________________/
-  //        This provider               The provider with this token
-  //        is mandatory.               can resolve to `undefined`.
-};
-
-@Module({
-  providers: [
-    connectionProvider,
-    MyOptionsProvider, // class-base provider
-    // { provide: 'SomeOptionalProvider', useValue: 'anything' },
-  ],
-})
-export class AppModule {}
-```
-
-#### Alias providers: `useExisting`
-
-The `useExisting` syntax allows you to create aliases for existing providers. This creates two ways to access the same provider. In the example below, the (string-based) token `'AliasedLoggerService'` is an alias for the (class-based) token `LoggerService`. Assume we have two different dependencies, one for `'AliasedLoggerService'` and one for `LoggerService`. If both dependencies are specified with `SINGLETON` scope, they'll both resolve to the same instance.
+`useExisting`構文を使用すると、既存のプロバイダーのエイリアスを作成できます。これにより、同じプロバイダーにアクセスする2つの方法が作成されます。以下の例では、（文字列ベースの）トークン`'AliasedLoggerService'`は（クラスベースの）トークン`LoggerService`のエイリアスです。`'AliasedLoggerService'`と`LoggerService`の2つの異なる依存関係があるとします。両方の依存関係が`SINGLETON`スコープで指定されている場合、両方とも同じインスタンスに解決されます。
 
 ```typescript
 @Injectable()
 class LoggerService {
-  /* implementation details */
+  /* 実装の詳細 */
 }
 
 const loggerAliasProvider = {
@@ -304,9 +194,9 @@ const loggerAliasProvider = {
 export class AppModule {}
 ```
 
-#### Non-service based providers
+#### サービスベースではないプロバイダー
 
-While providers often supply services, they are not limited to that usage. A provider can supply **any** value. For example, a provider may supply an array of configuration objects based on the current environment, as shown below:
+プロバイダーはしばしばサービスを提供しますが、その用途に限定されるものではありません。プロバイダーは**どんな**値でも提供できます。例えば、プロバイダーは現在の環境に基づいて設定オブジェクトの配列を提供することができます：
 
 ```typescript
 const configFactory = {
@@ -322,14 +212,13 @@ const configFactory = {
 export class AppModule {}
 ```
 
-#### Export custom provider
+#### カスタムプロバイダーのエクスポート
 
-Like any provider, a custom provider is scoped to its declaring module. To make it visible to other modules, it must be exported. To export a custom provider, we can either use its token or the full provider object.
+他のプロバイダーと同様に、カスタムプロバイダーは宣言したモジュールにスコープされています。他のモジュールから見えるようにするには、エクスポートする必要があります。カスタムプロバイダーをエクスポートするには、そのトークンまたはプロバイダーオブジェクト全体を使用できます。
 
-The following example shows exporting using the token:
+以下の例は、トークンを使用したエクスポートを示しています：
 
 ```typescript
-@@filename()
 const connectionFactory = {
   provide: 'CONNECTION',
   useFactory: (optionsProvider: OptionsProvider) => {
@@ -344,27 +233,11 @@ const connectionFactory = {
   exports: ['CONNECTION'],
 })
 export class AppModule {}
-@@switch
-const connectionFactory = {
-  provide: 'CONNECTION',
-  useFactory: (optionsProvider) => {
-    const options = optionsProvider.get();
-    return new DatabaseConnection(options);
-  },
-  inject: [OptionsProvider],
-};
-
-@Module({
-  providers: [connectionFactory],
-  exports: ['CONNECTION'],
-})
-export class AppModule {}
 ```
 
-Alternatively, export with the full provider object:
+あるいは、プロバイダーオブジェクト全体をエクスポートすることもできます：
 
 ```typescript
-@@filename()
 const connectionFactory = {
   provide: 'CONNECTION',
   useFactory: (optionsProvider: OptionsProvider) => {
@@ -379,19 +252,74 @@ const connectionFactory = {
   exports: [connectionFactory],
 })
 export class AppModule {}
-@@switch
-const connectionFactory = {
-  provide: 'CONNECTION',
-  useFactory: (optionsProvider) => {
-    const options = optionsProvider.get();
-    return new DatabaseConnection(options);
-  },
-  inject: [OptionsProvider],
-};
-
-@Module({
-  providers: [connectionFactory],
-  exports: [connectionFactory],
-})
-export class AppModule {}
 ```
+
+これで、NestJSのカスタムプロバイダーに関する文書の翻訳が完了しました。この文書では、様々な種類のカスタムプロバイダーとその使用方法について詳しく説明しています。
+
+NestJSのカスタムプロバイダーの主なユースケースをまとめさせていただきます。
+
+### カスタムプロバイダーの主なユースケース
+
+1. **値の直接注入** (`useValue`)
+   - テスト時のモックオブジェクトの注入
+   - 設定値や定数の注入
+   - 外部ライブラリのインスタンスの注入
+   ```typescript
+   {
+     provide: CatsService,
+     useValue: mockCatsService
+   }
+   ```
+
+2. **動的なクラス選択** (`useClass`)
+   - 環境に応じた異なる実装の切り替え（開発/本番環境）
+   - 機能フラグに基づく実装の切り替え
+   ```typescript
+   {
+     provide: ConfigService,
+     useClass: process.env.NODE_ENV === 'development' 
+       ? DevConfigService 
+       : ProdConfigService
+   }
+   ```
+
+3. **動的な値の生成** (`useFactory`)
+   - 実行時の条件に基づく値の生成
+   - 複数の依存関係を組み合わせた値の生成
+   - 非同期的な初期化が必要な場合
+   ```typescript
+   {
+     provide: 'DATABASE_CONNECTION',
+     useFactory: async (config: ConfigService) => {
+       return await createConnection(config.dbConfig);
+     },
+     inject: [ConfigService]
+   }
+   ```
+
+4. **エイリアスの作成** (`useExisting`)
+   - 既存のサービスに別名を付ける
+   - 後方互換性の維持
+   - インターフェースの抽象化
+   ```typescript
+   {
+     provide: 'LoggerAliasToken',
+     useExisting: LoggerService
+   }
+   ```
+
+5. **非サービス値の提供**
+   - 環境設定オブジェクト
+   - 定数や設定値の集合
+   - アプリケーション全体で共有される値
+   ```typescript
+   {
+     provide: 'APP_CONFIG',
+     useFactory: () => ({
+       apiUrl: process.env.API_URL,
+       timeout: 3000
+     })
+   }
+   ```
+
+これらのユースケースを適切に組み合わせることで、より柔軟でメンテナンス性の高いアプリケーションを構築することができます。特に、テスト容易性の向上や、環境に応じた動的な振る舞いの実現に役立ちます。
