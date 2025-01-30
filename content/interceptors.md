@@ -1,38 +1,36 @@
-### Interceptors
+### インターセプター
 
-An interceptor is a class annotated with the `@Injectable()` decorator and implements the `NestInterceptor` interface.
+インターセプターは`@Injectable()`デコレーターで修飾され、`NestInterceptor`インターフェースを実装したクラスです。
 
 <figure><img class="illustrative-image" src="/assets/Interceptors_1.png" /></figure>
 
-Interceptors have a set of useful capabilities which are inspired by the [Aspect Oriented Programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming) (AOP) technique. They make it possible to:
+インターセプターは[アスペクト指向プログラミング](https://en.wikipedia.org/wiki/Aspect-oriented_programming) (AOP)の手法にインスパイアされた、以下のような便利な機能を提供します：
 
-- bind extra logic before / after method execution
-- transform the result returned from a function
-- transform the exception thrown from a function
-- extend the basic function behavior
-- completely override a function depending on specific conditions (e.g., for caching purposes)
+- メソッド実行の前後に追加のロジックをバインドする
+- 関数から返される結果を変換する
+- 関数からスローされた例外を変換する
+- 基本的な関数の動作を拡張する
+- 特定の条件に応じて関数を完全にオーバーライドする(例：キャッシュ目的)
 
-#### Basics
+#### 基本
 
-Each interceptor implements the `intercept()` method, which takes two arguments. The first one is the `ExecutionContext` instance (exactly the same object as for [guards](/guards)). The `ExecutionContext` inherits from `ArgumentsHost`. We saw `ArgumentsHost` before in the exception filters chapter. There, we saw that it's a wrapper around arguments that have been passed to the original handler, and contains different arguments arrays based on the type of the application. You can refer back to the [exception filters](https://docs.nestjs.com/exception-filters#arguments-host) for more on this topic.
+各インターセプターは2つの引数を取る`intercept()`メソッドを実装します。1つ目は`ExecutionContext`インスタンス([ガード](/guards)と同じオブジェクト)です。`ExecutionContext`は`ArgumentsHost`を継承しています。`ArgumentsHost`については例外フィルターの章で見ました。そこで見たように、これは元のハンドラーに渡された引数のラッパーであり、アプリケーションの種類に応じて異なる引数配列を含んでいます。この詳細については[例外フィルター](https://docs.nestjs.com/exception-filters#arguments-host)を参照してください。
 
-#### Execution context
+#### 実行コンテキスト
 
-By extending `ArgumentsHost`, `ExecutionContext` also adds several new helper methods that provide additional details about the current execution process. These details can be helpful in building more generic interceptors that can work across a broad set of controllers, methods, and execution contexts. Learn more about `ExecutionContext` [here](/fundamentals/execution-context).
+`ExecutionContext`は`ArgumentsHost`を拡張することで、現在の実行プロセスに関する追加の詳細を提供するヘルパーメソッドをいくつか追加します。これらの詳細は、より汎用的なインターセプターを構築する際に役立ちます。`ExecutionContext`の詳細については[こちら](/fundamentals/execution-context)をご覧ください。
 
-#### Call handler
+#### コールハンドラー 
 
-The second argument is a `CallHandler`. The `CallHandler` interface implements the `handle()` method, which you can use to invoke the route handler method at some point in your interceptor. If you don't call the `handle()` method in your implementation of the `intercept()` method, the route handler method won't be executed at all.
+2つ目の引数は`CallHandler`です。`CallHandler`インターフェースは`handle()`メソッドを実装しており、これを使用してインターセプター内の任意の時点でルートハンドラーメソッドを呼び出すことができます。`intercept()`メソッドの実装で`handle()`メソッドを呼び出さない場合、ルートハンドラーメソッドは一切実行されません。
 
-This approach means that the `intercept()` method effectively **wraps** the request/response stream. As a result, you may implement custom logic **both before and after** the execution of the final route handler. It's clear that you can write code in your `intercept()` method that executes **before** calling `handle()`, but how do you affect what happens afterward? Because the `handle()` method returns an `Observable`, we can use powerful [RxJS](https://github.com/ReactiveX/rxjs) operators to further manipulate the response. Using Aspect Oriented Programming terminology, the invocation of the route handler (i.e., calling `handle()`) is called a [Pointcut](https://en.wikipedia.org/wiki/Pointcut), indicating that it's the point at which our additional logic is inserted.
+この方式により、`intercept()`メソッドはリクエスト/レスポンスのストリームを効果的に**ラップ**します。その結果、最終的なルートハンドラーの実行の**前後**に独自のロジックを実装できます。`handle()`を呼び出す**前**にコードを実行できるのは明らかですが、その後の動作にはどのように影響を与えられるのでしょうか？`handle()`メソッドは`Observable`を返すため、強力な[RxJS](https://github.com/ReactiveX/rxjs)オペレーターを使用してレスポンスをさらに操作できます。アスペクト指向プログラミングの用語では、ルートハンドラーの呼び出し(つまり`handle()`の呼び出し)は[ポイントカット](https://en.wikipedia.org/wiki/Pointcut)と呼ばれ、追加のロジックが挿入されるポイントを示します。
 
-Consider, for example, an incoming `POST /cats` request. This request is destined for the `create()` handler defined inside the `CatsController`. If an interceptor which does not call the `handle()` method is called anywhere along the way, the `create()` method won't be executed. Once `handle()` is called (and its `Observable` has been returned), the `create()` handler will be triggered. And once the response stream is received via the `Observable`, additional operations can be performed on the stream, and a final result returned to the caller.
+例えば、incoming `POST /cats`リクエストを考えてみましょう。このリクエストは`CatsController`内で定義された`create()`ハンドラーに向かいます。`handle()`メソッドを呼び出さないインターセプターが途中で呼び出された場合、`create()`メソッドは実行されません。`handle()`が呼び出され(`Observable`が返された後)、`create()`ハンドラーがトリガーされます。そして`Observable`を介してレスポンスストリームを受信すると、ストリームに追加の操作を実行し、最終結果を呼び出し元に返すことができます。
 
-<app-banner-devtools></app-banner-devtools>
+#### アスペクトインターセプション
 
-#### Aspect interception
-
-The first use case we'll look at is to use an interceptor to log user interaction (e.g., storing user calls, asynchronously dispatching events or calculating a timestamp). We show a simple `LoggingInterceptor` below:
+最初のユースケースとして、ユーザーの操作をログに記録する(例：ユーザーの呼び出しを保存、イベントを非同期にディスパッチ、タイムスタンプを計算する)ためにインターセプターを使用する例を見てみましょう。以下に簡単な`LoggingInterceptor`を示します：
 
 ```typescript
 @@filename(logging.interceptor)
@@ -73,15 +71,15 @@ export class LoggingInterceptor {
 }
 ```
 
-> info **Hint** The `NestInterceptor<T, R>` is a generic interface in which `T` indicates the type of an `Observable<T>` (supporting the response stream), and `R` is the type of the value wrapped by `Observable<R>`.
+> info **ヒント** `NestInterceptor<T, R>`は汎用インターフェースで、`T`は`Observable<T>`の型(レスポンスストリームをサポート)を示し、`R`は`Observable<R>`でラップされた値の型です。
 
-> warning **Notice** Interceptors, like controllers, providers, guards, and so on, can **inject dependencies** through their `constructor`.
+> warning **注意** インターセプターは、コントローラーやプロバイダー、ガードなどと同様に、`constructor`を通じて依存関係を**注入**できます。
 
-Since `handle()` returns an RxJS `Observable`, we have a wide choice of operators we can use to manipulate the stream. In the example above, we used the `tap()` operator, which invokes our anonymous logging function upon graceful or exceptional termination of the observable stream, but doesn't otherwise interfere with the response cycle.
+`handle()`はRxJSの`Observable`を返すため、ストリームを操作するための幅広いオペレーターを選択できます。上記の例では、`tap()`オペレーターを使用しています。これは、observableストリームの正常または例外的な終了時に匿名のログ関数を呼び出しますが、レスポンスサイクルには干渉しません。
 
-#### Binding interceptors
+#### インターセプターのバインド
 
-In order to set up the interceptor, we use the `@UseInterceptors()` decorator imported from the `@nestjs/common` package. Like [pipes](/pipes) and [guards](/guards), interceptors can be controller-scoped, method-scoped, or global-scoped.
+インターセプターを設定するには、`@nestjs/common`パッケージからインポートした`@UseInterceptors()`デコレーターを使用します。[パイプ](/pipes)や[ガード](/guards)と同様に、インターセプターはコントローラースコープ、メソッドスコープ、またはグローバルスコープで設定できます。
 
 ```typescript
 @@filename(cats.controller)
@@ -89,16 +87,16 @@ In order to set up the interceptor, we use the `@UseInterceptors()` decorator im
 export class CatsController {}
 ```
 
-> info **Hint** The `@UseInterceptors()` decorator is imported from the `@nestjs/common` package.
+> info **ヒント** `@UseInterceptors()`デコレーターは`@nestjs/common`パッケージからインポートされます。
 
-Using the above construction, each route handler defined in `CatsController` will use `LoggingInterceptor`. When someone calls the `GET /cats` endpoint, you'll see the following output in your standard output:
+上記の構成を使用すると、`CatsController`で定義された各ルートハンドラーは`LoggingInterceptor`を使用します。誰かが`GET /cats`エンドポイントを呼び出すと、標準出力に以下のような出力が表示されます：
 
 ```typescript
 Before...
 After... 1ms
 ```
 
-Note that we passed the `LoggingInterceptor` class (instead of an instance), leaving responsibility for instantiation to the framework and enabling dependency injection. As with pipes, guards, and exception filters, we can also pass an in-place instance:
+パイプ、ガード、例外フィルターと同様に、インスタンスの代わりに`LoggingInterceptor`クラスを渡し、インスタンス化の責任をフレームワークに任せ、依存性注入を可能にしています。インスタンスをその場で渡すこともできます：
 
 ```typescript
 @@filename(cats.controller)
@@ -106,16 +104,16 @@ Note that we passed the `LoggingInterceptor` class (instead of an instance), lea
 export class CatsController {}
 ```
 
-As mentioned, the construction above attaches the interceptor to every handler declared by this controller. If we want to restrict the interceptor's scope to a single method, we simply apply the decorator at the **method level**.
+前述のように、上記の構成はこのコントローラーで宣言された全てのハンドラーにインターセプターを適用します。インターセプターのスコープを単一のメソッドに制限したい場合は、デコレーターを**メソッドレベル**で適用するだけです。
 
-In order to set up a global interceptor, we use the `useGlobalInterceptors()` method of the Nest application instance:
+グローバルインターセプターを設定するには、Nestアプリケーションインスタンスの`useGlobalInterceptors()`メソッドを使用します：
 
 ```typescript
 const app = await NestFactory.create(AppModule);
 app.useGlobalInterceptors(new LoggingInterceptor());
 ```
 
-Global interceptors are used across the whole application, for every controller and every route handler. In terms of dependency injection, global interceptors registered from outside of any module (with `useGlobalInterceptors()`, as in the example above) cannot inject dependencies since this is done outside the context of any module. In order to solve this issue, you can set up an interceptor **directly from any module** using the following construction:
+グローバルインターセプターは、全てのコントローラーと全てのルートハンドラーに対して、アプリケーション全体で使用されます。依存性注入に関して、任意のモジュールの外部で登録されたグローバルインターセプター(上記の例のように`useGlobalInterceptors()`で)は、これが任意のモジュールのコンテキスト外で行われるため、依存関係を注入できません。この問題を解決するには、以下の構成を使用して、インターセプターを**任意のモジュールから直接**設定できます：
 
 ```typescript
 @@filename(app.module)
@@ -133,17 +131,15 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 export class AppModule {}
 ```
 
-> info **Hint** When using this approach to perform dependency injection for the interceptor, note that regardless of the
-> module where this construction is employed, the interceptor is, in fact, global. Where should this be done? Choose the module
-> where the interceptor (`LoggingInterceptor` in the example above) is defined. Also, `useClass` is not the only way of dealing with custom provider registration. Learn more [here](/fundamentals/custom-providers).
+> info **ヒント** このアプローチを使用してインターセプターの依存性注入を実行する場合、この構成が使用されるモジュールに関係なく、インターセプターは実際にはグローバルであることに注意してください。これはどこで行うべきでしょうか？インターセプター(上記の例では`LoggingInterceptor`)が定義されているモジュールを選択してください。また、`useClass`はカスタムプロバイダーの登録を扱う唯一の方法ではありません。詳細は[こちら](/fundamentals/custom-providers)をご覧ください。
 
-#### Response mapping
+#### レスポンスマッピング
 
-We already know that `handle()` returns an `Observable`. The stream contains the value **returned** from the route handler, and thus we can easily mutate it using RxJS's `map()` operator.
+`handle()`が`Observable`を返すことは既に知っています。ストリームにはルートハンドラーから**返された**値が含まれているため、RxJSの`map()`オペレーターを使用して簡単に変更できます。
 
-> warning **Warning** The response mapping feature doesn't work with the library-specific response strategy (using the `@Res()` object directly is forbidden).
+> warning **警告** レスポンスマッピング機能は、ライブラリ固有のレスポンス戦略(`@Res()`オブジェクトを直接使用することは禁止されています)では動作しません。
 
-Let's create the `TransformInterceptor`, which will modify each response in a trivial way to demonstrate the process. It will use RxJS's `map()` operator to assign the response object to the `data` property of a newly created object, returning the new object to the client.
+プロセスを示すために、各レスポンスを些細な方法で変更する`TransformInterceptor`を作成してみましょう。RxJSの`map()`オペレーターを使用して、レスポンスオブジェクトを新しく作成されたオブジェクトの`data`プロパティに割り当て、新しいオブジェクトをクライアントに返します。
 
 ```typescript
 @@filename(transform.interceptor)
@@ -173,9 +169,9 @@ export class TransformInterceptor {
 }
 ```
 
-> info **Hint** Nest interceptors work with both synchronous and asynchronous `intercept()` methods. You can simply switch the method to `async` if necessary.
+> info **ヒント** Nestインターセプターは同期と非同期の両方の`intercept()`メソッドで動作します。必要に応じて、メソッドを`async`に切り替えるだけです。
 
-With the above construction, when someone calls the `GET /cats` endpoint, the response would look like the following (assuming that route handler returns an empty array `[]`):
+上記の構成で、誰かが`GET /cats`エンドポイントを呼び出すと、レスポンスは以下のようになります(ルートハンドラーが空の配列`[]`を返すと仮定):
 
 ```json
 {
@@ -183,8 +179,8 @@ With the above construction, when someone calls the `GET /cats` endpoint, the re
 }
 ```
 
-Interceptors have great value in creating re-usable solutions to requirements that occur across an entire application.
-For example, imagine we need to transform each occurrence of a `null` value to an empty string `''`. We can do it using one line of code and bind the interceptor globally so that it will automatically be used by each registered handler.
+インターセプターは、アプリケーション全体で発生する要件に再利用可能なソリューションを作成する上で大きな価値があります。
+例えば、全ての`null`値を空文字列`''`に変換する必要がある場合を想像してください。1行のコードでそれを行い、インターセプターをグローバルにバインドすることで、登録された各ハンドラーで自動的に使用されるようになります。
 
 ```typescript
 @@filename()
@@ -214,24 +210,12 @@ export class ExcludeNullInterceptor {
 }
 ```
 
-#### Exception mapping
+#### 例外マッピング
 
-Another interesting use-case is to take advantage of RxJS's `catchError()` operator to override thrown exceptions:
+もう1つの興味深いユースケースは、RxJSの`catchError()`オペレーターを活用してスローされた例外をオーバーライドすることです：
 
 ```typescript
 @@filename(errors.interceptor)
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  BadGatewayException,
-  CallHandler,
-} from '@nestjs/common';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-
-@Injectable()
-export class ErrorsInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next
       .handle()
@@ -257,9 +241,9 @@ export class ErrorsInterceptor {
 }
 ```
 
-#### Stream overriding
+#### ストリームのオーバーライド
 
-There are several reasons why we may sometimes want to completely prevent calling the handler and return a different value instead. An obvious example is to implement a cache to improve response time. Let's take a look at a simple **cache interceptor** that returns its response from a cache. In a realistic example, we'd want to consider other factors like TTL, cache invalidation, cache size, etc., but that's beyond the scope of this discussion. Here we'll provide a basic example that demonstrates the main concept.
+場合によっては、ハンドラーの呼び出しを完全に防ぎ、代わりに異なる値を返したい理由がいくつかあります。明白な例として、レスポンス時間を改善するためのキャッシュの実装があります。簡単な**キャッシュインターセプター**を見てみましょう。現実的な例では、TTL、キャッシュの無効化、キャッシュサイズなどの他の要因も考慮する必要がありますが、それはこの議論の範囲を超えています。ここでは主要な概念を示す基本的な例を提供します：
 
 ```typescript
 @@filename(cache.interceptor)
@@ -292,11 +276,11 @@ export class CacheInterceptor {
 }
 ```
 
-Our `CacheInterceptor` has a hardcoded `isCached` variable and a hardcoded response `[]` as well. The key point to note is that we return a new stream here, created by the RxJS `of()` operator, therefore the route handler **won't be called** at all. When someone calls an endpoint that makes use of `CacheInterceptor`, the response (a hardcoded, empty array) will be returned immediately. In order to create a generic solution, you can take advantage of `Reflector` and create a custom decorator. The `Reflector` is well described in the [guards](/guards) chapter.
+この`CacheInterceptor`には、ハードコードされた`isCached`変数とハードコードされたレスポンス`[]`があります。重要なポイントは、RxJSの`of()`オペレーターによって作成された新しいストリームを返すことです。そのため、ルートハンドラーは**一切呼び出されません**。`CacheInterceptor`を使用するエンドポイントを誰かが呼び出すと、レスポンス(ハードコードされた空の配列)が即座に返されます。汎用的なソリューションを作成するには、`Reflector`を活用してカスタムデコレーターを作成できます。`Reflector`については[ガード](/guards)の章で詳しく説明されています。
 
-#### More operators
+#### その他のオペレーター
 
-The possibility of manipulating the stream using RxJS operators gives us many capabilities. Let's consider another common use case. Imagine you would like to handle **timeouts** on route requests. When your endpoint doesn't return anything after a period of time, you want to terminate with an error response. The following construction enables this:
+RxJSオペレーターを使用してストリームを操作する可能性により、多くの機能が提供されます。別の一般的なユースケースを考えてみましょう。ルートリクエストの**タイムアウト**を処理したいとします。エンドポイントが一定時間後に何も返さない場合、エラーレスポンスで終了させたいとします。以下の構成でこれが可能になります：
 
 ```typescript
 @@filename(timeout.interceptor)
@@ -339,4 +323,87 @@ export class TimeoutInterceptor {
 };
 ```
 
-After 5 seconds, request processing will be canceled. You can also add custom logic before throwing `RequestTimeoutException` (e.g. release resources).
+5秒後にリクエスト処理がキャンセルされます。`RequestTimeoutException`をスローする前にカスタムロジック(例：リソースの解放)を追加することもできます。
+
+インターセプターの主要なユースケースをご紹介します：
+
+1. ロギングとモニタリング
+- リクエスト/レスポンスのログ記録
+- 実行時間の計測（パフォーマンスモニタリング）
+- アクセスログの記録
+- エラーのログ記録と通知
+
+2. キャッシュ
+- レスポンスのキャッシュ
+- 頻繁にアクセスされるデータのキャッシュ
+- 条件付きキャッシュの実装
+
+3. レスポンス変換
+- レスポンス形式の標準化（共通のレスポンス構造への変換）
+- nullの除外や特定の値の変換
+- 機密データの除去やマスキング
+- レスポンスの圧縮
+
+4. エラーハンドリング
+- 共通のエラー処理
+- 特定の例外の変換
+- エラーレスポンスの標準化
+
+5. 認証・認可
+- トークンの検証
+- ユーザーセッションの確認
+- アクセス権限の検証
+- レート制限の実装
+
+6. トランザクション管理
+- データベーストランザクションの開始/コミット
+- トランザクションのロールバック処理
+- 複数のデータベース操作の一貫性保証
+
+7. 非機能要件の実装
+- タイムアウト処理
+- リトライ処理
+- サーキットブレーカーパターンの実装
+- スロットリング
+
+実際の例を示すと：
+
+```typescript
+// 認証トークン検証の例
+@Injectable()
+export class AuthInterceptor implements NestInterceptor {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    const request = context.switchToHttp().getRequest();
+    const token = request.headers['authorization'];
+    
+    if (!token) {
+      throw new UnauthorizedException();
+    }
+    
+    // トークン検証ロジック
+    try {
+      request.user = verifyToken(token);
+      return next.handle();
+    } catch (error) {
+      throw new UnauthorizedException();
+    }
+  }
+}
+
+// レスポンス標準化の例
+@Injectable()
+export class ResponseFormatInterceptor implements NestInterceptor {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    return next.handle().pipe(
+      map(data => ({
+        success: true,
+        data,
+        timestamp: new Date().toISOString(),
+        path: context.switchToHttp().getRequest().url
+      }))
+    );
+  }
+}
+```
+
+これらのインターセプターは、アプリケーション全体で一貫した動作を実現し、コードの重複を減らすのに役立ちます。また、ビジネスロジックと横断的関心事を明確に分離することができます。
