@@ -1,12 +1,12 @@
-### Exception filters
+### 例外フィルター
 
-Nest comes with a built-in **exceptions layer** which is responsible for processing all unhandled exceptions across an application. When an exception is not handled by your application code, it is caught by this layer, which then automatically sends an appropriate user-friendly response.
+Nestには組み込みの**例外レイヤー**があり、アプリケーション全体で処理されていない例外を処理する責任を持ちます。アプリケーションコードで処理されない例外は、このレイヤーによってキャッチされ、適切なユーザーフレンドリーなレスポンスが自動的に送信されます。
 
 <figure>
   <img class="illustrative-image" src="/assets/Filter_1.png" />
 </figure>
 
-Out of the box, this action is performed by a built-in **global exception filter**, which handles exceptions of type `HttpException` (and subclasses of it). When an exception is **unrecognized** (is neither `HttpException` nor a class that inherits from `HttpException`), the built-in exception filter generates the following default JSON response:
+標準では、この処理は組み込みの**グローバル例外フィルター**によって実行され、`HttpException`型(およびその派生クラス)の例外を処理します。例外が**認識されない**場合(つまり`HttpException`でもなく、`HttpException`を継承したクラスでもない場合)、組み込みの例外フィルターは以下のようなデフォルトのJSONレスポンスを生成します：
 
 ```json
 {
@@ -15,13 +15,13 @@ Out of the box, this action is performed by a built-in **global exception filter
 }
 ```
 
-> info **Hint** The global exception filter partially supports the `http-errors` library. Basically, any thrown exception containing the `statusCode` and `message` properties will be properly populated and sent back as a response (instead of the default `InternalServerErrorException` for unrecognized exceptions).
+> info **ヒント** グローバル例外フィルターは`http-errors`ライブラリを部分的にサポートしています。基本的に、`statusCode`と`message`プロパティを含むスローされた例外は、適切に処理されレスポンスとして送信されます（認識されない例外に対するデフォルトの`InternalServerErrorException`の代わりに）。
 
-#### Throwing standard exceptions
+#### 標準例外のスロー
 
-Nest provides a built-in `HttpException` class, exposed from the `@nestjs/common` package. For typical HTTP REST/GraphQL API based applications, it's best practice to send standard HTTP response objects when certain error conditions occur.
+Nestは`@nestjs/common`パッケージから`HttpException`クラスを提供しています。一般的なHTTP REST/GraphQL APIベースのアプリケーションでは、特定のエラー状況が発生した時に標準的なHTTPレスポンスオブジェクトを送信することがベストプラクティスです。
 
-For example, in the `CatsController`, we have a `findAll()` method (a `GET` route handler). Let's assume that this route handler throws an exception for some reason. To demonstrate this, we'll hard-code it as follows:
+例えば、`CatsController`には`findAll()`メソッド（`GET`ルートハンドラ）があります。このルートハンドラが何らかの理由で例外をスローすると仮定しましょう。これを示すために、次のようにハードコードしてみます：
 
 ```typescript
 @@filename(cats.controller)
@@ -31,9 +31,9 @@ async findAll() {
 }
 ```
 
-> info **Hint** We used the `HttpStatus` here. This is a helper enum imported from the `@nestjs/common` package.
+> info **ヒント** ここでは`HttpStatus`を使用しています。これは`@nestjs/common`パッケージからインポートされるヘルパー列挙型です。
 
-When the client calls this endpoint, the response looks like this:
+クライアントがこのエンドポイントを呼び出すと、レスポンスは次のようになります：
 
 ```json
 {
@@ -42,27 +42,24 @@ When the client calls this endpoint, the response looks like this:
 }
 ```
 
-The `HttpException` constructor takes two required arguments which determine the
-response:
+`HttpException`コンストラクタは、レスポンスを決定する2つの必須引数を取ります：
 
-- The `response` argument defines the JSON response body. It can be a `string`
-  or an `object` as described below.
-- The `status` argument defines the [HTTP status code](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status).
+- `response`引数は、JSONレスポンスボディを定義します。以下で説明するように、`string`または`object`を指定できます。
+- `status`引数は、[HTTPステータスコード](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)を定義します。
 
-By default, the JSON response body contains two properties:
+デフォルトでは、JSONレスポンスボディには2つのプロパティが含まれます：
 
-- `statusCode`: defaults to the HTTP status code provided in the `status` argument
-- `message`: a short description of the HTTP error based on the `status`
+- `statusCode`: デフォルトでは`status`引数で提供されたHTTPステータスコードになります
+- `message`: `status`に基づいたHTTPエラーの短い説明
 
-To override just the message portion of the JSON response body, supply a string
-in the `response` argument. To override the entire JSON response body, pass an object in the `response` argument. Nest will serialize the object and return it as the JSON response body.
+JSONレスポンスボディのメッセージ部分だけをオーバーライドするには、`response`引数に文字列を指定します。JSONレスポンスボディ全体をオーバーライドするには、`response`引数にオブジェクトを渡します。Nestはそのオブジェクトをシリアライズし、JSONレスポンスボディとして返します。
 
-The second constructor argument - `status` - should be a valid HTTP status code.
-Best practice is to use the `HttpStatus` enum imported from `@nestjs/common`.
+2番目のコンストラクタ引数 - `status` - は有効なHTTPステータスコードである必要があります。
+ベストプラクティスは、`@nestjs/common`からインポートされる`HttpStatus`列挙型を使用することです。
 
-There is a **third** constructor argument (optional) - `options` - that can be used to provide an error [cause](https://nodejs.org/en/blog/release/v16.9.0/#error-cause). This `cause` object is not serialized into the response object, but it can be useful for logging purposes, providing valuable information about the inner error that caused the `HttpException` to be thrown.
+**3番目**のコンストラクタ引数（オプション）- `options` - はエラーの[cause](https://nodejs.org/en/blog/release/v16.9.0/#error-cause)を提供するために使用できます。この`cause`オブジェクトはレスポンスオブジェクトにシリアライズされませんが、`HttpException`がスローされた原因となった内部エラーに関する貴重な情報を提供できるため、ログ記録の目的で役立ちます。
 
-Here's an example overriding the entire response body and providing an error cause:
+以下は、レスポンスボディ全体をオーバーライドし、エラーの原因を提供する例です：
 
 ```typescript
 @@filename(cats.controller)
@@ -81,7 +78,7 @@ async findAll() {
 }
 ```
 
-Using the above, this is how the response would look:
+上記を使用すると、レスポンスは次のようになります：
 
 ```json
 {
@@ -90,17 +87,17 @@ Using the above, this is how the response would look:
 }
 ```
 
-#### Exceptions logging
+#### 例外のログ記録
 
-By default, the exception filter does not log built-in exceptions like `HttpException` (and any exceptions that inherit from it). When these exceptions are thrown, they won't appear in the console, as they are treated as part of the normal application flow. The same behavior applies to other built-in exceptions such as `WsException` and `RpcException`.
+デフォルトでは、例外フィルターは`HttpException`（およびその継承クラス）のような組み込みの例外をログに記録しません。これらの例外がスローされた場合、通常のアプリケーションフローの一部として扱われるため、コンソールには表示されません。同じ動作が`WsException`や`RpcException`などの他の組み込み例外にも適用されます。
 
-These exceptions all inherit from the base `IntrinsicException` class, which is exported from the `@nestjs/common` package. This class helps differentiate between exceptions that are part of normal application operation and those that are not.
+これらの例外はすべて、`@nestjs/common`パッケージからエクスポートされる基本の`IntrinsicException`クラスを継承しています。このクラスは、通常のアプリケーション操作の一部である例外とそうでない例外を区別するのに役立ちます。
 
-If you want to log these exceptions, you can create a custom exception filter. We'll explain how to do this in the next section.
+これらの例外をログに記録したい場合は、カスタム例外フィルターを作成することができます。次のセクションでその方法を説明します。
 
-#### Custom exceptions
+#### カスタム例外
 
-In many cases, you will not need to write custom exceptions, and can use the built-in Nest HTTP exception, as described in the next section. If you do need to create customized exceptions, it's good practice to create your own **exceptions hierarchy**, where your custom exceptions inherit from the base `HttpException` class. With this approach, Nest will recognize your exceptions, and automatically take care of the error responses. Let's implement such a custom exception:
+多くの場合、カスタム例外を作成する必要はなく、次のセクションで説明する組み込みのNest HTTP例外を使用できます。カスタム例外を作成する必要がある場合は、基本の`HttpException`クラスを継承する**例外階層**を作成することがグッドプラクティスです。このアプローチでは、Nestは例外を認識し、自動的にエラーレスポンスを処理します。以下のようなカスタム例外を実装してみましょう：
 
 ```typescript
 @@filename(forbidden.exception)
@@ -111,7 +108,7 @@ export class ForbiddenException extends HttpException {
 }
 ```
 
-Since `ForbiddenException` extends the base `HttpException`, it will work seamlessly with the built-in exception handler, and therefore we can use it inside the `findAll()` method.
+`ForbiddenException`は基本の`HttpException`を継承しているため、組み込みの例外ハンドラーとシームレスに連携します。したがって、`findAll()`メソッド内で使用することができます。
 
 ```typescript
 @@filename(cats.controller)
@@ -121,9 +118,9 @@ async findAll() {
 }
 ```
 
-#### Built-in HTTP exceptions
+#### 組み込みのHTTP例外
 
-Nest provides a set of standard exceptions that inherit from the base `HttpException`. These are exposed from the `@nestjs/common` package, and represent many of the most common HTTP exceptions:
+Nestは、基本の`HttpException`を継承した標準例外のセットを提供します。これらは`@nestjs/common`パッケージから公開され、最も一般的なHTTP例外の多くを表現します：
 
 - `BadRequestException`
 - `UnauthorizedException`
@@ -146,7 +143,7 @@ Nest provides a set of standard exceptions that inherit from the base `HttpExcep
 - `GatewayTimeoutException`
 - `PreconditionFailedException`
 
-All the built-in exceptions can also provide both an error `cause` and an error description using the `options` parameter:
+すべての組み込み例外は、`options`パラメータを使用してエラーの`cause`とエラーの説明の両方を提供することもできます：
 
 ```typescript
 throw new BadRequestException('Something bad happened', {
@@ -155,7 +152,7 @@ throw new BadRequestException('Something bad happened', {
 });
 ```
 
-Using the above, this is how the response would look:
+上記を使用すると、レスポンスは次のようになります：
 
 ```json
 {
@@ -165,11 +162,11 @@ Using the above, this is how the response would look:
 }
 ```
 
-#### Exception filters
+#### 例外フィルター
 
-While the base (built-in) exception filter can automatically handle many cases for you, you may want **full control** over the exceptions layer. For example, you may want to add logging or use a different JSON schema based on some dynamic factors. **Exception filters** are designed for exactly this purpose. They let you control the exact flow of control and the content of the response sent back to the client.
+基本（組み込み）の例外フィルターは多くのケースを自動的に処理できますが、例外レイヤーを**完全にコントロール**したい場合もあるでしょう。例えば、ログを追加したり、動的な要因に基づいて異なるJSONスキーマを使用したりする場合です。**例外フィルター**はまさにこの目的のために設計されています。これらにより、制御の正確なフローとクライアントに送り返されるレスポンスの内容をコントロールすることができます。
 
-Let's create an exception filter that is responsible for catching exceptions which are an instance of the `HttpException` class, and implementing custom response logic for them. To do this, we'll need to access the underlying platform `Request` and `Response` objects. We'll access the `Request` object so we can pull out the original `url` and include that in the logging information. We'll use the `Response` object to take direct control of the response that is sent, using the `response.json()` method.
+`HttpException`クラスのインスタンスである例外をキャッチし、カスタムレスポンスロジックを実装する例外フィルターを作成してみましょう。そのためには、基盤となるプラットフォームの`Request`オブジェクトと`Response`オブジェクトにアクセスする必要があります。`Request`オブジェクトにアクセスして元の`url`を取得し、ログ情報に含めます。`Response`オブジェクトを使用して、`response.json()`メソッドを使用して送信されるレスポンスを直接制御します。
 
 ```typescript
 @@filename(http-exception.filter)
@@ -215,23 +212,23 @@ export class HttpExceptionFilter {
 }
 ```
 
-> info **Hint** All exception filters should implement the generic `ExceptionFilter<T>` interface. This requires you to provide the `catch(exception: T, host: ArgumentsHost)` method with its indicated signature. `T` indicates the type of the exception.
+> info **ヒント** すべての例外フィルターは、ジェネリックな`ExceptionFilter<T>`インターフェースを実装する必要があります。これにより、指定された署名を持つ`catch(exception: T, host: ArgumentsHost)`メソッドを提供する必要があります。`T`は例外の型を示します。
 
-> warning **Warning** If you are using `@nestjs/platform-fastify` you can use `response.send()` instead of `response.json()`. Don't forget to import the correct types from `fastify`.
+> warning **警告** `@nestjs/platform-fastify`を使用している場合は、`response.json()`の代わりに`response.send()`を使用できます。`fastify`から正しい型をインポートすることを忘れないでください。
 
-The `@Catch(HttpException)` decorator binds the required metadata to the exception filter, telling Nest that this particular filter is looking for exceptions of type `HttpException` and nothing else. The `@Catch()` decorator may take a single parameter, or a comma-separated list. This lets you set up the filter for several types of exceptions at once.
+`@Catch(HttpException)`デコレーターは、必要なメタデータを例外フィルターにバインドし、このフィルターが`HttpException`型の例外のみを探していることをNestに伝えます。`@Catch()`デコレーターは単一のパラメータ、またはコンマで区切られたリストを取ることができます。これにより、一度に複数の種類の例外に対してフィルターを設定することができます。
 
-#### Arguments host
+#### 引数ホスト
 
-Let's look at the parameters of the `catch()` method. The `exception` parameter is the exception object currently being processed. The `host` parameter is an `ArgumentsHost` object. `ArgumentsHost` is a powerful utility object that we'll examine further in the [execution context chapter](/fundamentals/execution-context)\*. In this code sample, we use it to obtain a reference to the `Request` and `Response` objects that are being passed to the original request handler (in the controller where the exception originates). In this code sample, we've used some helper methods on `ArgumentsHost` to get the desired `Request` and `Response` objects. Learn more about `ArgumentsHost` [here](/fundamentals/execution-context).
+`catch()`メソッドのパラメータを見てみましょう。`exception`パラメータは、現在処理中の例外オブジェクトです。`host`パラメータは`ArgumentsHost`オブジェクトです。`ArgumentsHost`は強力なユーティリティオブジェクトで、[実行コンテキストの章](/fundamentals/execution-context)でさらに詳しく説明します\*。このコードサンプルでは、例外が発生した元のリクエストハンドラ（コントローラ内）に渡される`Request`オブジェクトと`Response`オブジェクトへの参照を取得するために使用しています。このコードサンプルでは、`ArgumentsHost`のヘルパーメソッドを使用して、必要な`Request`オブジェクトと`Response`オブジェクトを取得しています。`ArgumentsHost`についての詳細は[こちら](/fundamentals/execution-context)をご覧ください。
 
-\*The reason for this level of abstraction is that `ArgumentsHost` functions in all contexts (e.g., the HTTP server context we're working with now, but also Microservices and WebSockets). In the execution context chapter we'll see how we can access the appropriate <a href="https://docs.nestjs.com/fundamentals/execution-context#host-methods">underlying arguments</a> for **any** execution context with the power of `ArgumentsHost` and its helper functions. This will allow us to write generic exception filters that operate across all contexts.
+\*この抽象化レベルが必要な理由は、`ArgumentsHost`がすべてのコンテキスト（現在作業しているHTTPサーバーコンテキストだけでなく、マイクロサービスやWebSocketsも）で機能するためです。実行コンテキストの章では、`ArgumentsHost`とそのヘルパー関数の力を使用して、**任意の**実行コンテキストに対して適切な<a href="https://docs.nestjs.com/fundamentals/execution-context#host-methods">基礎となる引数</a>にアクセスする方法を見ていきます。これにより、すべてのコンテキストで動作する汎用的な例外フィルターを作成することができます。
 
 <app-banner-courses></app-banner-courses>
 
-#### Binding filters
+#### フィルターのバインド
 
-Let's tie our new `HttpExceptionFilter` to the `CatsController`'s `create()` method.
+新しい`HttpExceptionFilter`を`CatsController`の`create()`メソッドにバインドしてみましょう。
 
 ```typescript
 @@filename(cats.controller)
@@ -249,9 +246,9 @@ async create(createCatDto) {
 }
 ```
 
-> info **Hint** The `@UseFilters()` decorator is imported from the `@nestjs/common` package.
+> info **ヒント** `@UseFilters()`デコレータは`@nestjs/common`パッケージからインポートされています。
 
-We have used the `@UseFilters()` decorator here. Similar to the `@Catch()` decorator, it can take a single filter instance, or a comma-separated list of filter instances. Here, we created the instance of `HttpExceptionFilter` in place. Alternatively, you may pass the class (instead of an instance), leaving responsibility for instantiation to the framework, and enabling **dependency injection**.
+ここでは`@UseFilters()`デコレータを使用しています。`@Catch()`デコレータと同様に、単一のフィルターインスタンス、またはコンマで区切られたフィルターインスタンスのリストを取ることができます。ここでは、`HttpExceptionFilter`のインスタンスをその場で作成しています。また、インスタンスの代わりにクラスを渡すこともできます。これにより、インスタンス化の責任をフレームワークに委ね、**依存性の注入**を可能にします。
 
 ```typescript
 @@filename(cats.controller)
@@ -269,10 +266,10 @@ async create(createCatDto) {
 }
 ```
 
-> info **Hint** Prefer applying filters by using classes instead of instances when possible. It reduces **memory usage** since Nest can easily reuse instances of the same class across your entire module.
+> info **ヒント** 可能な限り、インスタンスの代わりにクラスを使用してフィルターを適用することを推奨します。Nestは同じクラスのインスタンスをモジュール全体で簡単に再利用できるため、**メモリ使用量**が削減されます。
 
-In the example above, the `HttpExceptionFilter` is applied only to the single `create()` route handler, making it method-scoped. Exception filters can be scoped at different levels: method-scoped of the controller/resolver/gateway, controller-scoped, or global-scoped.
-For example, to set up a filter as controller-scoped, you would do the following:
+上記の例では、`HttpExceptionFilter`は単一の`create()`ルートハンドラにのみ適用され、メソッドスコープとなっています。例外フィルターは異なるレベルでスコープを設定できます：コントローラ/リゾルバ/ゲートウェイのメソッドスコープ、コントローラスコープ、またはグローバルスコープです。
+例えば、フィルターをコントローラスコープとして設定するには、次のようにします：
 
 ```typescript
 @@filename(cats.controller)
@@ -280,9 +277,9 @@ For example, to set up a filter as controller-scoped, you would do the following
 export class CatsController {}
 ```
 
-This construction sets up the `HttpExceptionFilter` for every route handler defined inside the `CatsController`.
+この構成により、`CatsController`内で定義されたすべてのルートハンドラに対して`HttpExceptionFilter`が設定されます。
 
-To create a global-scoped filter, you would do the following:
+グローバルスコープのフィルターを作成するには、次のようにします：
 
 ```typescript
 @@filename(main)
@@ -294,9 +291,9 @@ async function bootstrap() {
 bootstrap();
 ```
 
-> warning **Warning** The `useGlobalFilters()` method does not set up filters for gateways or hybrid applications.
+> warning **警告** `useGlobalFilters()`メソッドは、ゲートウェイやハイブリッドアプリケーションに対してフィルターを設定しません。
 
-Global-scoped filters are used across the whole application, for every controller and every route handler. In terms of dependency injection, global filters registered from outside of any module (with `useGlobalFilters()` as in the example above) cannot inject dependencies since this is done outside the context of any module. In order to solve this issue, you can register a global-scoped filter **directly from any module** using the following construction:
+グローバルスコープのフィルターは、すべてのコントローラとすべてのルートハンドラに対して、アプリケーション全体で使用されます。依存性注入に関しては、任意のモジュールの外部で登録されたグローバルフィルター（上記の例のように`useGlobalFilters()`を使用）は、これがモジュールのコンテキスト外で行われるため、依存性を注入することができません。この問題を解決するために、以下の構成を使用して、**任意のモジュールから直接**グローバルスコープのフィルターを登録することができます：
 
 ```typescript
 @@filename(app.module)
@@ -314,15 +311,15 @@ import { APP_FILTER } from '@nestjs/core';
 export class AppModule {}
 ```
 
-> info **Hint** When using this approach to perform dependency injection for the filter, note that regardless of the module where this construction is employed, the filter is, in fact, global. Where should this be done? Choose the module where the filter (`HttpExceptionFilter` in the example above) is defined. Also, `useClass` is not the only way of dealing with custom provider registration. Learn more [here](/fundamentals/custom-providers).
+> info **ヒント** このアプローチを使用してフィルターに対して依存性注入を実行する場合、この構成が使用されるモジュールに関係なく、フィルターは実際にグローバルであることに注意してください。どこで行うべきでしょうか？フィルター（上記の例では`HttpExceptionFilter`）が定義されているモジュールを選択してください。また、`useClass`はカスタムプロバイダー登録の唯一の方法ではありません。詳細は[こちら](/fundamentals/custom-providers)をご覧ください。
 
-You can add as many filters with this technique as needed; simply add each to the providers array.
+この技術を使用して、必要な数のフィルターを追加できます。単にprovidersの配列に各フィルターを追加するだけです。
 
-#### Catch everything
+#### すべてをキャッチ
 
-In order to catch **every** unhandled exception (regardless of the exception type), leave the `@Catch()` decorator's parameter list empty, e.g., `@Catch()`.
+処理されていない**すべての**例外をキャッチするには（例外の型に関係なく）、`@Catch()`デコレータのパラメータリストを空のままにします（例：`@Catch()`）。
 
-In the example below we have a code that is platform-agnostic because it uses the [HTTP adapter](./faq/http-adapter) to deliver the response, and doesn't use any of the platform-specific objects (`Request` and `Response`) directly:
+以下の例では、プラットフォームに依存しないコードを示しています。これは[HTTPアダプター](./faq/http-adapter)を使用してレスポンスを配信し、プラットフォーム固有のオブジェクト（`Request`および`Response`）を直接使用しないためです：
 
 ```typescript
 import {
@@ -339,8 +336,8 @@ export class CatchEverythingFilter implements ExceptionFilter {
   constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
-    // In certain situations `httpAdapter` might not be available in the
-    // constructor method, thus we should resolve it here.
+    // 特定の状況では、コンストラクタメソッドで`httpAdapter`が利用できない
+    // 場合があるため、ここで解決する必要があります。
     const { httpAdapter } = this.httpAdapterHost;
 
     const ctx = host.switchToHttp();
@@ -361,13 +358,13 @@ export class CatchEverythingFilter implements ExceptionFilter {
 }
 ```
 
-> warning **Warning** When combining an exception filter that catches everything with a filter that is bound to a specific type, the "Catch anything" filter should be declared first to allow the specific filter to correctly handle the bound type.
+> warning **警告** すべてをキャッチする例外フィルターを特定の型にバインドされたフィルターと組み合わせる場合、「すべてをキャッチ」フィルターを最初に宣言して、特定のフィルターがバインドされた型を正しく処理できるようにする必要があります。
 
-#### Inheritance
+#### 継承
 
-Typically, you'll create fully customized exception filters crafted to fulfill your application requirements. However, there might be use-cases when you would like to simply extend the built-in default **global exception filter**, and override the behavior based on certain factors.
+通常、アプリケーションの要件を満たすように完全にカスタマイズされた例外フィルターを作成します。しかし、組み込みのデフォルトの**グローバル例外フィルター**を単純に拡張し、特定の要因に基づいて動作をオーバーライドしたい場合もあるでしょう。
 
-In order to delegate exception processing to the base filter, you need to extend `BaseExceptionFilter` and call the inherited `catch()` method.
+例外処理を基本フィルターに委譲するには、`BaseExceptionFilter`を拡張し、継承された`catch()`メソッドを呼び出す必要があります。
 
 ```typescript
 @@filename(all-exceptions.filter)
@@ -392,11 +389,11 @@ export class AllExceptionsFilter extends BaseExceptionFilter {
 }
 ```
 
-> warning **Warning** Method-scoped and Controller-scoped filters that extend the `BaseExceptionFilter` should not be instantiated with `new`. Instead, let the framework instantiate them automatically.
+> warning **警告** `BaseExceptionFilter`を拡張するメソッドスコープおよびコントローラスコープのフィルターは、`new`でインスタンス化すべきではありません。代わりに、フレームワークに自動的にインスタンス化させてください。
 
-Global filters **can** extend the base filter. This can be done in either of two ways.
+グローバルフィルターは基本フィルターを拡張**できます**。これは2つの方法で行うことができます。
 
-The first method is to inject the `HttpAdapter` reference when instantiating the custom global filter:
+最初の方法は、カスタムグローバルフィルターをインスタンス化する際に`HttpAdapter`参照を注入することです：
 
 ```typescript
 async function bootstrap() {
@@ -410,4 +407,4 @@ async function bootstrap() {
 bootstrap();
 ```
 
-The second method is to use the `APP_FILTER` token <a href="exception-filters#binding-filters">as shown here</a>.
+2番目の方法は、`APP_FILTER`トークンを使用することです（<a href="exception-filters#binding-filters">ここで示したように</a>）。
