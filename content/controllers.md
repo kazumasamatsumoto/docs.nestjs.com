@@ -1,18 +1,18 @@
-### Controllers
+### コントローラー
 
-Controllers are responsible for handling incoming **requests** and sending **responses** back to the client.
+コントローラーは、クライアントからの**リクエスト**を処理し、**レスポンス**を返す役割を担っています。
 
 <figure><img class="illustrative-image" src="/assets/Controllers_1.png" /></figure>
 
-A controller's purpose is to handle specific requests for the application. The **routing** mechanism determines which controller will handle each request. Often, a controller has multiple routes, and each route can perform a different action.
+コントローラーの目的は、アプリケーションの特定のリクエストを処理することです。**ルーティング**メカニズムによって、どのコントローラーがどのリクエストを処理するかが決定されます。通常、コントローラーは複数のルートを持ち、各ルートは異なるアクションを実行できます。
 
-To create a basic controller, we use classes and **decorators**. Decorators link classes with the necessary metadata, allowing Nest to create a routing map that connects requests to their corresponding controllers.
+基本的なコントローラーを作成するには、クラスと**デコレータ**を使用します。デコレータは、必要なメタデータをクラスに関連付け、Nest がリクエストを対応するコントローラーに接続するルーティングマップを作成できるようにします。
 
-> info **Hint** To quickly create a CRUD controller with built-in [validation](https://docs.nestjs.com/techniques/validation), you can use the CLI's [CRUD generator](https://docs.nestjs.com/recipes/crud-generator#crud-generator): `nest g resource [name]`.
+> info **ヒント** 組み込みの[バリデーション](https://docs.nestjs.com/techniques/validation)を備えた CRUD コントローラーを素早く作成するには、CLI の[CRUD ジェネレーター](https://docs.nestjs.com/recipes/crud-generator#crud-generator)を使用できます：`nest g resource [name]`
 
-#### Routing
+#### ルーティング
 
-In the following example, we’ll use the `@Controller()` decorator, which is **required** to define a basic controller. We'll specify an optional route path prefix of `cats`. Using a path prefix in the `@Controller()` decorator helps us group related routes together and reduces repetitive code. For example, if we want to group routes that manage interactions with a cat entity under the `/cats` path, we can specify the `cats` path prefix in the `@Controller()` decorator. This way, we don't need to repeat that portion of the path for each route in the file.
+次の例では、基本的なコントローラーを定義するために**必須**の`@Controller()`デコレータを使用します。オプションのルートパスプレフィックスとして`cats`を指定します。`@Controller()`デコレータでパスプレフィックスを使用すると、関連するルートをグループ化し、繰り返しコードを減らすことができます。例えば、cat エンティティとの対話を管理するルートを`/cats`パスの下にグループ化したい場合、`@Controller()`デコレータで`cats`パスプレフィックスを指定できます。これにより、ファイル内の各ルートでそのパスの部分を繰り返す必要がなくなります。
 
 ```typescript
 @@filename(cats.controller)
@@ -37,43 +37,40 @@ export class CatsController {
 }
 ```
 
-> info **Hint** To create a controller using the CLI, simply execute the `$ nest g controller [name]` command.
+> info **ヒント** CLI を使用してコントローラーを作成するには、単純に `$ nest g controller [name]` コマンドを実行します。
 
-The `@Get()` HTTP request method decorator placed before the `findAll()` method tells Nest to create a handler for a specific endpoint for HTTP requests. This endpoint is defined by the HTTP request method (GET in this case) and the route path. So, what is the route path? The route path for a handler is determined by combining the (optional) prefix declared for the controller with any path specified in the method's decorator. Since we've set a prefix (`cats`) for every route and haven't added any specific path in the method decorator, Nest will map `GET /cats` requests to this handler.
+`findAll()`メソッドの前に配置された`@Get()`HTTP リクエストメソッドデコレータは、HTTP リクエストの特定のエンドポイント用のハンドラーを作成するよう Nest に指示します。このエンドポイントは、HTTP リクエストメソッド（この場合は GET）とルートパスによって定義されます。では、ルートパスとは何でしょうか？ハンドラーのルートパスは、コントローラーに宣言された（オプションの）プレフィックスと、メソッドのデコレータで指定された任意のパスを組み合わせて決定されます。すべてのルートにプレフィックス（`cats`）を設定し、メソッドデコレータに特定のパスを追加していないため、Nest は`GET /cats`リクエストをこのハンドラーにマッピングします。
 
-As mentioned, the route path includes both the optional controller path prefix **and** any path string specified in the method's decorator. For example, if the controller prefix is `cats` and the method decorator is `@Get('breed')`, the resulting route will be `GET /cats/breed`.
+前述のように、ルートパスには、オプションのコントローラーパスプレフィックス**と**メソッドのデコレータで指定された任意のパス文字列の両方が含まれます。例えば、コントローラーのプレフィックスが`cats`で、メソッドデコレータが`@Get('breed')`の場合、結果のルートは`GET /cats/breed`となります。
 
-In our example above, when a GET request is made to this endpoint, Nest routes the request to the user-defined `findAll()` method. Note that the method name we choose here is entirely arbitrary. While we must declare a method to bind the route to, Nest doesn’t attach any specific significance to the method name.
+上記の例では、このエンドポイントに GET リクエストが行われると、Nest はリクエストをユーザー定義の`findAll()`メソッドにルーティングします。ここで選択したメソッド名は完全に任意であることに注意してください。ルートにバインドするメソッドを宣言する必要はありますが、Nest はメソッド名に特別な意味を持たせていません。
 
-This method will return a 200 status code along with the associated response, which in this case is just a string. Why does this happen? To explain, we first need to introduce the concept that Nest uses two **different** options for manipulating responses:
+このメソッドは、関連するレスポンス（この場合は単なる文字列）とともに 200 ステータスコードを返します。なぜこれが起こるのでしょうか？説明するために、まず Nest がレスポンスを操作するために 2 つの**異なる**オプションを使用するという概念を紹介する必要があります：
+
+はい、テーブルの部分を翻訳いたします。
 
 <table>
   <tr>
-    <td>Standard (recommended)</td>
+    <td>標準的な方法（推奨）</td>
     <td>
-      Using this built-in method, when a request handler returns a JavaScript object or array, it will <strong>automatically</strong>
-      be serialized to JSON. When it returns a JavaScript primitive type (e.g., <code>string</code>, <code>number</code>, <code>boolean</code>), however, Nest will send just the value without attempting to serialize it. This makes response handling simple: just return the value, and Nest takes care of the rest.
+      この組み込みメソッドを使用すると、リクエストハンドラーが JavaScript のオブジェクトや配列を返す場合、**自動的に** JSON にシリアライズされます。ただし、JavaScript のプリミティブ型（例：<code>string</code>、<code>number</code>、<code>boolean</code>）を返す場合、Nest はシリアライズを試みずに値をそのまま送信します。これによりレスポンス処理がシンプルになります：値を返すだけで、残りは Nest が処理します。
       <br />
-      <br /> Furthermore, the response's <strong>status code</strong> is always 200 by default, except for POST
-      requests which use 201. We can easily change this behavior by adding the <code>@HttpCode(...)</code>
-      decorator at a handler-level (see <a href='controllers#status-code'>Status codes</a>).
+      <br />さらに、レスポンスの**ステータスコード**はデフォルトで常に 200 となります。ただし、POST リクエストの場合は 201 が使用されます。この動作は、ハンドラーレベルで<code>@HttpCode(...)</code>デコレータを追加することで簡単に変更できます（<a href='controllers#status-code'>ステータスコード</a>を参照）。
     </td>
   </tr>
   <tr>
-    <td>Library-specific</td>
+    <td>ライブラリ固有の方法</td>
     <td>
-      We can use the library-specific (e.g., Express) <a href="https://expressjs.com/en/api.html#res" rel="nofollow" target="_blank">response object</a>, which can be injected using the <code>@Res()</code> decorator in the method handler signature (e.g., <code>findAll(@Res() response)</code>).  With this approach, you have the ability to use the native response handling methods exposed by that object.  For example, with Express, you can construct responses using code like <code>response.status(200).send()</code>.
+      ライブラリ固有の（例：Express）<a href="https://expressjs.com/en/api.html#res" rel="nofollow" target="_blank">レスポンスオブジェクト</a>を使用することができます。これはメソッドハンドラーのシグネチャで<code>@Res()</code>デコレータを使用して注入できます（例：<code>findAll(@Res() response)</code>）。このアプローチでは、そのオブジェクトが提供するネイティブのレスポンス処理メソッドを使用できます。例えば、Express では<code>response.status(200).send()</code>のようなコードでレスポンスを構築できます。
     </td>
   </tr>
 </table>
 
-> warning **Warning** Nest detects when the handler is using either `@Res()` or `@Next()`, indicating you have chosen the library-specific option. If both approaches are used at the same time, the Standard approach is **automatically disabled** for this single route and will no longer work as expected. To use both approaches at the same time (for example, by injecting the response object to only set cookies/headers but still leave the rest to the framework), you must set the `passthrough` option to `true` in the `@Res({{ '{' }} passthrough: true {{ '}' }})` decorator.
+> warning **警告** Nest はハンドラーが`@Res()`または`@Next()`を使用しているかを検出し、ライブラリ固有のオプションを選択したことを示します。両方のアプローチを同時に使用すると、標準的なアプローチはこの単一のルートに対して**自動的に無効**になり、期待通りに動作しなくなります。両方のアプローチを同時に使用する場合（例えば、レスポンスオブジェクトを注入してクッキー/ヘッダーの設定のみを行い、残りはフレームワークに任せる場合）、`@Res({{ '{' }} passthrough: true {{ '}' }})`デコレータで`passthrough`オプションを`true`に設定する必要があります。
 
-<app-banner-devtools></app-banner-devtools>
+#### リクエストオブジェクト
 
-#### Request object
-
-Handlers often need access to the client’s **request** details. Nest provides access to the [request object](https://expressjs.com/en/api.html#req) from the underlying platform (Express by default). You can access the request object by instructing Nest to inject it using the `@Req()` decorator in the handler’s signature.
+ハンドラーは、クライアントの**リクエスト**の詳細にアクセスする必要がよくあります。Nest は基盤となるプラットフォーム（デフォルトでは Express）から[リクエストオブジェクト](https://expressjs.com/en/api.html#req)へのアクセスを提供します。ハンドラーのシグネチャで`@Req()`デコレータを使用して Nest に注入を指示することで、リクエストオブジェクトにアクセスできます。
 
 ```typescript
 @@filename(cats.controller)
@@ -100,9 +97,9 @@ export class CatsController {
 }
 ```
 
-> info **Hint** To take advantage of `express` typings (like in the `request: Request` parameter example above), make sure to install the `@types/express` package.
+> info **ヒント** `express`の型定義（上記の`request: Request`パラメータの例のような）を活用するには、`@types/express`パッケージをインストールしてください。
 
-The request object represents the HTTP request and contains properties for the query string, parameters, HTTP headers, and body (read more [here](https://expressjs.com/en/api.html#req)). In most cases, you don't need to manually access these properties. Instead, you can use dedicated decorators like `@Body()` or `@Query()`, which are available out of the box. Below is a list of the provided decorators and the corresponding platform-specific objects they represent.
+リクエストオブジェクトは HTTP リクエストを表し、クエリ文字列、パラメータ、HTTP ヘッダー、ボディのプロパティを含んでいます（詳細は[こちら](https://expressjs.com/en/api.html#req)）。ほとんどの場合、これらのプロパティに手動でアクセスする必要はありません。代わりに、すぐに使える`@Body()`や`@Query()`のような専用のデコレータを使用できます。以下は、提供されているデコレータとそれらが表すプラットフォーム固有のオブジェクトのリストです。
 
 <table>
   <tbody>
@@ -148,13 +145,13 @@ The request object represents the HTTP request and contains properties for the q
   </tbody>
 </table>
 
-<sup>\* </sup>For compatibility with typings across underlying HTTP platforms (e.g., Express and Fastify), Nest provides `@Res()` and `@Response()` decorators. `@Res()` is simply an alias for `@Response()`. Both directly expose the underlying native platform `response` object interface. When using them, you should also import the typings for the underlying library (e.g., `@types/express`) to take full advantage. Note that when you inject either `@Res()` or `@Response()` in a method handler, you put Nest into **Library-specific mode** for that handler, and you become responsible for managing the response. When doing so, you must issue some kind of response by making a call on the `response` object (e.g., `res.json(...)` or `res.send(...)`), or the HTTP server will hang.
+<sup>\* </sup>基盤となる HTTP プラットフォーム（例：Express や Fastify）間での型定義の互換性のために、Nest は`@Res()`と`@Response()`デコレータを提供しています。`@Res()`は単に`@Response()`のエイリアスです。どちらも基盤となるネイティブプラットフォームの`response`オブジェクトインターフェースを直接公開します。これらを使用する際は、基盤となるライブラリの型定義（例：`@types/express`）もインポートして、完全に活用すべきです。`@Res()`または`@Response()`をメソッドハンドラーに注入すると、そのハンドラーに対して Nest が**ライブラリ固有モード**になり、レスポンスの管理があなたの責任となることに注意してください。その場合、`response`オブジェクトに対して何らかの呼び出し（例：`res.json(...)`や`res.send(...)`）を行ってレスポンスを発行する必要があります。そうしないと、HTTP サーバーがハングします。
 
-> info **Hint** To learn how to create your own custom decorators, visit [this](/custom-decorators) chapter.
+> info **ヒント** 独自のカスタムデコレータの作成方法については、[こちら](/custom-decorators)の章を参照してください。
 
-#### Resources
+#### リソース
 
-Earlier, we defined an endpoint to fetch the cats resource (**GET** route). We'll typically also want to provide an endpoint that creates new records. For this, let's create the **POST** handler:
+先ほど、cats リソースを取得するエンドポイント（**GET**ルート）を定義しました。通常、新しいレコードを作成するエンドポイントも提供したいと思います。そのために、**POST**ハンドラーを作成しましょう：
 
 ```typescript
 @@filename(cats.controller)
@@ -189,11 +186,11 @@ export class CatsController {
 }
 ```
 
-It's that simple. Nest provides decorators for all of the standard HTTP methods: `@Get()`, `@Post()`, `@Put()`, `@Delete()`, `@Patch()`, `@Options()`, and `@Head()`. In addition, `@All()` defines an endpoint that handles all of them.
+このように簡単です。Nest は標準的なすべての HTTP メソッド用のデコレータを提供しています：`@Get()`、`@Post()`、`@Put()`、`@Delete()`、`@Patch()`、`@Options()`、`@Head()`。さらに、`@All()`はこれらすべてを処理するエンドポイントを定義します。
 
-#### Route wildcards
+#### ルートワイルドカード
 
-Pattern-based routes are also supported in NestJS. For example, the asterisk (`*`) can be used as a wildcard to match any combination of characters in a route at the end of a path. In the following example, the `findAll()` method will be executed for any route that starts with `abcd/`, regardless of the number of characters that follow.
+NestJS ではパターンベースのルートもサポートされています。例えば、アスタリスク（`*`）をワイルドカードとして使用して、パスの末尾でルート内の任意の文字の組み合わせにマッチさせることができます。次の例では、`findAll()`メソッドは`abcd/`で始まるすべてのルートに対して実行されます。後に続く文字数に関係ありません。
 
 ```typescript
 @Get('abcd/*')
@@ -202,15 +199,15 @@ findAll() {
 }
 ```
 
-The `'abcd/*'` route path will match `abcd/`, `abcd/123`, `abcd/abc`, and so on. The hyphen ( `-`) and the dot (`.`) are interpreted literally by string-based paths.
+`'abcd/*'`ルートパスは、`abcd/`、`abcd/123`、`abcd/abc`などにマッチします。ハイフン（`-`）とドット（`.`）は文字列ベースのパスで文字通りに解釈されます。
 
-This approach works on both Express and Fastify. However, with the latest release of Express (v5), the routing system has become more strict. In pure Express, you must use a named wildcard to make the route work—for example, `abcd/*splat`, where `splat` is simply the name of the wildcard parameter and has no special meaning. You can name it anything you like. That said, since Nest provides a compatibility layer for Express, you can still use the asterisk (`*`) as a wildcard.
+このアプローチは Express と Fastify の両方で動作します。ただし、Express の最新リリース（v5）では、ルーティングシステムがより厳密になっています。純粋な Express では、ルートを機能させるために名前付きワイルドカードを使用する必要があります—例えば、`abcd/*splat`です。ここで`splat`は単にワイルドカードパラメータの名前であり、特別な意味はありません。好きな名前を付けることができます。とはいえ、Nest は Express の互換性レイヤーを提供しているため、引き続きアスタリスク（`*`）をワイルドカードとして使用できます。
 
-When it comes to asterisks used in the **middle of a route**, Express requires named wildcards (e.g., `ab{{ '{' }}*splat&#125;cd`), while Fastify does not support them at all.
+**ルートの途中**でアスタリスクを使用する場合、Express では名前付きワイルドカード（例：`ab{{ '{' }}*splat&#125;cd`）が必要ですが、Fastify ではまったくサポートされていません。
 
-#### Status code
+#### ステータスコード
 
-As mentioned, the default **status code** for responses is always **200**, except for POST requests, which default to **201**. You can easily change this behavior by using the `@HttpCode(...)` decorator at the handler level.
+前述のように、レスポンスのデフォルトの**ステータスコード**は常に**200**です。ただし、POST リクエストの場合は**201**がデフォルトとなります。この動作は、ハンドラーレベルで`@HttpCode(...)`デコレータを使用することで簡単に変更できます。
 
 ```typescript
 @Post()
@@ -220,13 +217,13 @@ create() {
 }
 ```
 
-> info **Hint** Import `HttpCode` from the `@nestjs/common` package.
+> info **ヒント** `HttpCode`は`@nestjs/common`パッケージからインポートしてください。
 
-Often, your status code isn't static but depends on various factors. In that case, you can use a library-specific **response** (inject using `@Res()`) object (or, in case of an error, throw an exception).
+多くの場合、ステータスコードは静的ではなく、様々な要因に依存します。その場合、ライブラリ固有の**レスポンス**オブジェクト（`@Res()`を使用して注入）を使用するか、エラーの場合は例外をスローすることができます。
 
-#### Response headers
+#### レスポンスヘッダー
 
-To specify a custom response header, you can either use a `@Header()` decorator or a library-specific response object (and call `res.header()` directly).
+カスタムレスポンスヘッダーを指定するには、`@Header()`デコレータを使用するか、ライブラリ固有のレスポンスオブジェクトを使用して（`res.header()`を直接呼び出して）設定することができます。
 
 ```typescript
 @Post()
@@ -236,22 +233,24 @@ create() {
 }
 ```
 
-> info **Hint** Import `Header` from the `@nestjs/common` package.
+はい、その部分を翻訳いたします：
 
-#### Redirection
+> info **ヒント** `Header`は`@nestjs/common`パッケージからインポートしてください。
 
-To redirect a response to a specific URL, you can either use a `@Redirect()` decorator or a library-specific response object (and call `res.redirect()` directly).
+#### リダイレクト
 
-`@Redirect()` takes two arguments, `url` and `statusCode`, both are optional. The default value of `statusCode` is `302` (`Found`) if omitted.
+レスポンスを特定の URL にリダイレクトするには、`@Redirect()`デコレータを使用するか、ライブラリ固有のレスポンスオブジェクトを使用して（`res.redirect()`を直接呼び出して）設定することができます。
+
+`@Redirect()`は 2 つの引数`url`と`statusCode`を取りますが、どちらもオプションです。`statusCode`を省略した場合、デフォルト値は`302`（`Found`）となります。
 
 ```typescript
 @Get()
 @Redirect('https://nestjs.com', 301)
 ```
 
-> info **Hint** Sometimes you may want to determine the HTTP status code or the redirect URL dynamically. Do this by returning an object following the `HttpRedirectResponse` interface (from `@nestjs/common`).
+> info **ヒント** HTTP ステータスコードやリダイレクト URL を動的に決定したい場合があります。これは`HttpRedirectResponse`インターフェース（`@nestjs/common`から）に従うオブジェクトを返すことで実現できます。
 
-Returned values will override any arguments passed to the `@Redirect()` decorator. For example:
+戻り値は`@Redirect()`デコレータに渡された引数を上書きします。例えば：
 
 ```typescript
 @Get('docs')
@@ -263,11 +262,11 @@ getDocs(@Query('version') version) {
 }
 ```
 
-#### Route parameters
+#### ルートパラメータ
 
-Routes with static paths won’t work when you need to accept **dynamic data** as part of the request (e.g., `GET /cats/1` to get the cat with id `1`). To define routes with parameters, you can add route parameter **tokens** in the route path to capture the dynamic values from the URL. The route parameter token in the `@Get()` decorator example below illustrates this approach. These route parameters can then be accessed using the `@Param()` decorator, which should be added to the method signature.
+静的なパスを持つルートは、リクエストの一部として**動的なデータ**を受け入れる必要がある場合（例：ID `1`の cat を取得するための`GET /cats/1`）には機能しません。パラメータを持つルートを定義するには、URL から動的な値を取得するためのルートパラメータ**トークン**をルートパスに追加できます。以下の`@Get()`デコレータの例では、このアプローチを示すルートパラメータトークンを使用しています。これらのルートパラメータには、メソッドのシグネチャに追加する`@Param()`デコレータを使用してアクセスできます。
 
-> info **Hint** Routes with parameters should be declared after any static paths. This prevents the parameterized paths from intercepting traffic destined for the static paths.
+> info **ヒント** パラメータを持つルートは、静的なパスの後に宣言する必要があります。これにより、パラメータ化されたパスが静的なパスに向けられたトラフィックを横取りするのを防ぎます。
 
 ```typescript
 @@filename()
@@ -285,9 +284,9 @@ findOne(params) {
 }
 ```
 
-The `@Param()` decorator is used to decorate a method parameter (in the example above, `params`), making the **route** parameters accessible as properties of that decorated method parameter inside the method. As shown in the code, you can access the `id` parameter by referencing `params.id`. Alternatively, you can pass a specific parameter token to the decorator and directly reference the route parameter by name within the method body.
+`@Param()`デコレータは、メソッドパラメータを装飾するために使用され（上記の例では`params`）、メソッド内でそのデコレートされたメソッドパラメータのプロパティとして**ルート**パラメータにアクセスできるようにします。コードに示されているように、`params.id`を参照することで`id`パラメータにアクセスできます。あるいは、デコレータに特定のパラメータトークンを渡して、メソッド本体内でルートパラメータを名前で直接参照することもできます。
 
-> info **Hint** Import `Param` from the `@nestjs/common` package.
+> info **ヒント** `Param`は`@nestjs/common`パッケージからインポートしてください。
 
 ```typescript
 @@filename()
@@ -303,9 +302,9 @@ findOne(id) {
 }
 ```
 
-#### Sub-domain routing
+#### サブドメインルーティング
 
-The `@Controller` decorator can take a `host` option to require that the HTTP host of the incoming requests matches some specific value.
+`@Controller`デコレータは`host`オプションを取ることができ、受信リクエストの HTTP ホストが特定の値と一致することを要求できます。
 
 ```typescript
 @Controller({ host: 'admin.example.com' })
@@ -317,9 +316,9 @@ export class AdminController {
 }
 ```
 
-> warning **Warning** Since **Fastify** does not support nested routers, if you are using sub-domain routing, it is recommended to use the default Express adapter instead.
+> warning **警告** **Fastify**はネストされたルーターをサポートしていないため、サブドメインルーティングを使用する場合は、代わりにデフォルトの Express アダプターを使用することをお勧めします。
 
-Similar to a route `path`, the `hosts` option can use tokens to capture the dynamic value at that position in the host name. The host parameter token in the `@Controller()` decorator example below demonstrates this usage. Host parameters declared in this way can be accessed using the `@HostParam()` decorator, which should be added to the method signature.
+ルートの`path`と同様に、`hosts`オプションでもトークンを使用して、ホスト名のその位置にある動的な値を取得することができます。以下の`@Controller()`デコレータの例では、ホストパラメータトークンのこの使用方法を示しています。このように宣言されたホストパラメータには、メソッドのシグネチャに追加する`@HostParam()`デコレータを使用してアクセスできます。
 
 ```typescript
 @Controller({ host: ':account.example.com' })
@@ -331,15 +330,15 @@ export class AccountController {
 }
 ```
 
-#### State sharing
+#### 状態の共有
 
-For developers coming from other programming languages, it might be surprising to learn that in Nest, nearly everything is shared across incoming requests. This includes resources like the database connection pool, singleton services with global state, and more. It's important to understand that Node.js doesn't use the request/response Multi-Threaded Stateless Model, where each request is handled by a separate thread. As a result, using singleton instances in Nest is completely **safe** for our applications.
+他のプログラミング言語から来た開発者にとって、Nest では、ほぼすべてのものが受信リクエスト間で共有されていることを知ると驚くかもしれません。これには、データベース接続プール、グローバル状態を持つシングルトンサービスなどのリソースが含まれます。Node.js は、各リクエストが別々のスレッドによって処理されるリクエスト/レスポンスのマルチスレッド・ステートレスモデルを使用していないことを理解することが重要です。その結果、Nest でシングルトンインスタンスを使用することは、アプリケーションにとって完全に**安全**です。
 
-That said, there are specific edge cases where having request-based lifetimes for controllers may be necessary. Examples include per-request caching in GraphQL applications, request tracking, or implementing multi-tenancy. You can learn more about controlling injection scopes [here](/fundamentals/injection-scopes).
+とはいえ、コントローラーにリクエストベースのライフタイムが必要となる特定のエッジケースが存在します。例として、GraphQL アプリケーションでのリクエストごとのキャッシング、リクエストの追跡、マルチテナンシーの実装などがあります。インジェクションスコープの制御については[こちら](/fundamentals/injection-scopes)で詳しく学ぶことができます。
 
-#### Asynchronicity
+#### 非同期性
 
-We love modern JavaScript, especially its emphasis on **asynchronous** data handling. That’s why Nest fully supports `async` functions. Every `async` function must return a `Promise`, which allows you to return a deferred value that Nest can resolve automatically. Here's an example:
+私たちは現代の JavaScript、特に**非同期**データ処理の重視を愛しています。そのため、Nest は`async`関数を完全にサポートしています。すべての`async`関数は`Promise`を返す必要があり、これにより Nest が自動的に解決できる遅延値を返すことができます。以下は例です：
 
 ```typescript
 @@filename(cats.controller)
@@ -354,7 +353,7 @@ async findAll() {
 }
 ```
 
-This code is perfectly valid. But Nest takes it a step further by allowing route handlers to return RxJS [observable streams](https://rxjs-dev.firebaseapp.com/guide/observable) as well. Nest will handle the subscription internally and resolve the final emitted value once the stream completes.
+このコードは完全に有効です。しかし、Nest はさらに一歩進んで、ルートハンドラーが RxJS の[observable ストリーム](https://rxjs-dev.firebaseapp.com/guide/observable)を返すことも可能にしています。Nest は内部でサブスクリプションを処理し、ストリームが完了すると最終的に発行された値を解決します。
 
 ```typescript
 @@filename(cats.controller)
@@ -369,15 +368,15 @@ findAll() {
 }
 ```
 
-Both approaches are valid, and you can choose the one that best suits your needs.
+両方のアプローチが有効で、ニーズに最も適したものを選択できます。
 
-#### Request payloads
+#### リクエストペイロード
 
-In our previous example, the POST route handler didn’t accept any client parameters. Let's fix that by adding the `@Body()` decorator.
+前回の例では、POST ルートハンドラーはクライアントパラメータを受け付けていませんでした。`@Body()`デコレータを追加して、これを修正しましょう。
 
-Before we proceed (if you're using TypeScript), we need to define the **DTO** (Data Transfer Object) schema. A DTO is an object that specifies how data should be sent over the network. We could define the DTO schema using **TypeScript** interfaces or simple classes. However, we recommend using **classes** here. Why? Classes are part of the JavaScript ES6 standard, so they remain intact as real entities in the compiled JavaScript. In contrast, TypeScript interfaces are removed during transpilation, meaning Nest can't reference them at runtime. This is important because features like **Pipes** rely on having access to the metatype of variables at runtime, which is only possible with classes.
+先に進む前に（TypeScript を使用している場合）、**DTO**（Data Transfer Object）スキーマを定義する必要があります。DTO は、データがネットワーク上でどのように送信されるべきかを指定するオブジェクトです。DTO スキーマは**TypeScript**のインターフェースや単純なクラスを使用して定義できます。しかし、ここでは**クラス**の使用を推奨します。なぜでしょうか？クラスは JavaScript ES6 標準の一部であり、コンパイルされた JavaScript でも実体として残ります。対照的に、TypeScript のインターフェースはトランスパイル時に削除され、Nest は実行時にそれらを参照できなくなります。これは重要です。なぜなら、**Pipes**のような機能は実行時に変数のメタタイプにアクセスする必要があり、これはクラスでのみ可能だからです。
 
-Let's create the `CreateCatDto` class:
+`CreateCatDto`クラスを作成してみましょう：
 
 ```typescript
 @@filename(create-cat.dto)
@@ -388,7 +387,7 @@ export class CreateCatDto {
 }
 ```
 
-It has only three basic properties. Thereafter we can use the newly created DTO inside the `CatsController`:
+これには 3 つの基本的なプロパティしかありません。その後、新しく作成した DTO を`CatsController`内で使用できます：
 
 ```typescript
 @@filename(cats.controller)
@@ -404,13 +403,13 @@ async create(createCatDto) {
 }
 ```
 
-> info **Hint** Our `ValidationPipe` can filter out properties that should not be received by the method handler. In this case, we can whitelist the acceptable properties, and any property not included in the whitelist is automatically stripped from the resulting object. In the `CreateCatDto` example, our whitelist is the `name`, `age`, and `breed` properties. Learn more [here](https://docs.nestjs.com/techniques/validation#stripping-properties).
+> info **ヒント** 私たちの`ValidationPipe`は、メソッドハンドラーが受け取るべきでないプロパティをフィルタリングできます。この場合、受け入れ可能なプロパティをホワイトリストに登録でき、ホワイトリストに含まれていないプロパティは結果のオブジェクトから自動的に除外されます。`CreateCatDto`の例では、ホワイトリストは`name`、`age`、`breed`プロパティです。詳しくは[こちら](https://docs.nestjs.com/techniques/validation#stripping-properties)をご覧ください。
 
-#### Query parameters
+#### クエリパラメータ
 
-When handling query parameters in your routes, you can use the `@Query()` decorator to extract them from incoming requests. Let's see how this works in practice.
+ルートでクエリパラメータを処理する際、`@Query()`デコレータを使用して受信リクエストからそれらを抽出できます。実際にどのように動作するか見てみましょう。
 
-Consider a route where we want to filter a list of cats based on query parameters like `age` and `breed`. First, define the query parameters in the `CatsController`:
+例えば、`age`や`breed`のようなクエリパラメータに基づいて cats のリストをフィルタリングしたい場合を考えてみましょう。まず、`CatsController`でクエリパラメータを定義します：
 
 ```typescript
 @@filename(cats.controller)
@@ -420,29 +419,29 @@ async findAll(@Query('age') age: number, @Query('breed') breed: string) {
 }
 ```
 
-In this example, the `@Query()` decorator is used to extract the values of `age` and `breed` from the query string. For example, a request to:
+この例では、`@Query()`デコレータを使用してクエリ文字列から`age`と`breed`の値を抽出しています。例えば、次のようなリクエストの場合：
 
 ```plaintext
 GET /cats?age=2&breed=Persian
 ```
 
-would result in `age` being `2` and `breed` being `Persian`.
+`age`は`2`、`breed`は`Persian`となります。
 
-If your application requires handling more complex query parameters, such as nested objects or arrays:
+アプリケーションでネストされたオブジェクトや配列のような、より複雑なクエリパラメータを処理する必要がある場合：
 
 ```plaintext
 ?filter[where][name]=John&filter[where][age]=30
 ?item[]=1&item[]=2
 ```
 
-you'll need to configure your HTTP adapter (Express or Fastify) to use an appropriate query parser. In Express, you can use the `extended` parser, which allows for rich query objects:
+HTTP アダプター（Express または Fastify）で適切なクエリパーサーを使用するように設定する必要があります。Express では、リッチなクエリオブジェクトを可能にする`extended`パーサーを使用できます：
 
 ```typescript
 const app = await NestFactory.create<NestExpressApplication>(AppModule);
 app.set('query parser', 'extended');
 ```
 
-In Fastify, you can use the `querystringParser` option:
+Fastify では、`querystringParser`オプションを使用できます：
 
 ```typescript
 const app = await NestFactory.create<NestFastifyApplication>(
@@ -453,15 +452,17 @@ const app = await NestFactory.create<NestFastifyApplication>(
 );
 ```
 
-> info **Hint** `qs` is a querystring parser that supports nesting and arrays. You can install it using `npm install qs`.
+> info **ヒント** `qs`はネストと配列をサポートするクエリ文字列パーサーです。`npm install qs`を使用してインストールできます。
 
-#### Handling errors
+はい、その部分を翻訳いたします：
 
-There's a separate chapter about handling errors (i.e., working with exceptions) [here](/exception-filters).
+#### エラー処理
 
-#### Full resource sample
+エラー処理（つまり、例外の処理）については、[こちら](/exception-filters)に別の章があります。
 
-Below is an example that demonstrates the use of several available decorators to create a basic controller. This controller provides a few methods to access and manipulate internal data.
+#### 完全なリソースサンプル
+
+以下は、基本的なコントローラーを作成するために利用可能な複数のデコレータの使用方法を示す例です。このコントローラーは、内部データにアクセスして操作するためのいくつかのメソッドを提供します。
 
 ```typescript
 @@filename(cats.controller)
@@ -533,13 +534,13 @@ export class CatsController {
 }
 ```
 
-> info **Hint** Nest CLI offers a generator (schematic) that automatically creates **all the boilerplate code**, saving you from doing this manually and improving the overall developer experience. Learn more about this feature [here](/recipes/crud-generator).
+> info **ヒント** Nest CLI は、**すべてのボイラープレートコード**を自動的に作成するジェネレーター（スキーマ）を提供しており、手動での作業を省き、全体的な開発者体験を向上させます。この機能の詳細については[こちら](/recipes/crud-generator)をご覧ください。
 
-#### Getting up and running
+#### 起動と実行
 
-Even with the `CatsController` fully defined, Nest doesn't yet know about it and won't automatically create an instance of the class.
+`CatsController`が完全に定義されていても、Nest はまだそれを認識しておらず、クラスのインスタンスを自動的に作成することはありません。
 
-Controllers must always be part of a module, which is why we include the `controllers` array within the `@Module()` decorator. Since we haven’t defined any other modules apart from the root `AppModule`, we’ll use it to register the `CatsController`:
+コントローラーは常にモジュールの一部である必要があります。そのため、`@Module()`デコレータ内に`controllers`配列を含めています。ルートの`AppModule`以外のモジュールを定義していないため、`CatsController`を登録するためにこれを使用します：
 
 ```typescript
 @@filename(app.module)
@@ -552,11 +553,13 @@ import { CatsController } from './cats/cats.controller';
 export class AppModule {}
 ```
 
-We attached the metadata to the module class using the `@Module()` decorator, and now Nest can easily determine which controllers need to be mounted.
+`@Module()`デコレータを使用してモジュールクラスにメタデータを付加し、これにより Nest はどのコントローラーをマウントする必要があるかを簡単に判断できるようになります。
 
-#### Library-specific approach
+はい、その部分を翻訳いたします：
 
-So far, we've covered the standard Nest way of manipulating responses. Another approach is to use a library-specific [response object](https://expressjs.com/en/api.html#res). To inject a specific response object, we can use the `@Res()` decorator. To highlight the differences, let’s rewrite the `CatsController` like this:
+#### ライブラリ固有のアプローチ
+
+ここまで、レスポンスを操作する標準的な Nest の方法について説明してきました。もう 1 つのアプローチは、ライブラリ固有の[レスポンスオブジェクト](https://expressjs.com/en/api.html#res)を使用することです。特定のレスポンスオブジェクトを注入するには、`@Res()`デコレータを使用できます。違いを明確にするために、`CatsController`を次のように書き換えてみましょう：
 
 ```typescript
 @@filename()
@@ -594,9 +597,9 @@ export class CatsController {
 }
 ```
 
-While this approach works and offers more flexibility by giving full control over the response object (such as header manipulation and access to library-specific features), it should be used with caution. Generally, this method is less clear and comes with some downsides. The main disadvantage is that your code becomes platform-dependent, as different underlying libraries may have different APIs for the response object. Additionally, it can make testing more challenging, as you'll need to mock the response object, among other things.
+このアプローチは機能し、レスポンスオブジェクトへの完全な制御（ヘッダーの操作やライブラリ固有の機能へのアクセスなど）を提供することでより柔軟性を提供しますが、注意して使用する必要があります。一般的に、このメソッドはあまり明確ではなく、いくつかの欠点があります。主な欠点は、異なる基盤となるライブラリがレスポンスオブジェクトに対して異なる API を持つ可能性があるため、コードがプラットフォーム依存になることです。さらに、レスポンスオブジェクトのモックを作成する必要があるなど、テストがより困難になる可能性があります。
 
-Furthermore, by using this approach, you lose compatibility with Nest features that rely on standard response handling, such as Interceptors and the `@HttpCode()` / `@Header()` decorators. To address this, you can enable the `passthrough` option like this:
+さらに、このアプローチを使用すると、インターセプターや`@HttpCode()` / `@Header()`デコレータなど、標準的なレスポンス処理に依存する Nest の機能との互換性が失われます。これに対処するには、次のように`passthrough`オプションを有効にできます：
 
 ```typescript
 @@filename()
@@ -614,4 +617,4 @@ findAll(res) {
 }
 ```
 
-With this approach, you can interact with the native response object (for example, setting cookies or headers based on specific conditions), while still allowing the framework to handle the rest.
+このアプローチを使用すると、ネイティブのレスポンスオブジェクトと対話できます（例えば、特定の条件に基づいてクッキーやヘッダーを設定するなど）が、残りの処理はフレームワークに任せることができます。
