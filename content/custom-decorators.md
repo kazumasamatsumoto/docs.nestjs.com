@@ -1,16 +1,15 @@
-### Custom route decorators
+### カスタムルートデコレーター
 
-Nest is built around a language feature called **decorators**. Decorators are a well-known concept in a lot of commonly used programming languages, but in the JavaScript world, they're still relatively new. In order to better understand how decorators work, we recommend reading [this article](https://medium.com/google-developers/exploring-es7-decorators-76ecb65fb841). Here's a simple definition:
+Nestは**デコレーター**と呼ばれる言語機能を中心に構築されています。デコレーターは多くの一般的なプログラミング言語でよく知られている概念ですが、JavaScriptの世界ではまだ比較的新しいものです。デコレーターの仕組みをより良く理解するために、[この記事](https://medium.com/google-developers/exploring-es7-decorators-76ecb65fb841)を読むことをお勧めします。以下は簡単な定義です：
 
 <blockquote class="external">
-  An ES2016 decorator is an expression which returns a function and can take a target, name and property descriptor as arguments.
-  You apply it by prefixing the decorator with an <code>@</code> character and placing this at the very top of what
-  you are trying to decorate. Decorators can be defined for either a class, a method or a property.
+  ES2016デコレーターは関数を返す式で、ターゲット、名前、プロパティディスクリプタを引数として取ることができます。
+  デコレーターの先頭に<code>@</code>文字を付けて、装飾したいものの一番上に配置することで適用します。デコレーターはクラス、メソッド、またはプロパティに対して定義できます。
 </blockquote>
 
-#### Param decorators
+#### パラメーターデコレーター
 
-Nest provides a set of useful **param decorators** that you can use together with the HTTP route handlers. Below is a list of the provided decorators and the plain Express (or Fastify) objects they represent
+Nestは、HTTPルートハンドラーと一緒に使用できる便利な**パラメーターデコレーター**のセットを提供します。以下は提供されているデコレーターとそれらが表すプレーンなExpress（またはFastify）オブジェクトのリストです：
 
 <table>
   <tbody>
@@ -57,15 +56,15 @@ Nest provides a set of useful **param decorators** that you can use together wit
   </tbody>
 </table>
 
-Additionally, you can create your own **custom decorators**. Why is this useful?
+さらに、独自の**カスタムデコレーター**を作成することもできます。なぜこれが有用なのでしょうか？
 
-In the node.js world, it's common practice to attach properties to the **request** object. Then you manually extract them in each route handler, using code like the following:
+Node.jsの世界では、**request**オブジェクトにプロパティを付加することが一般的な慣行です。その後、各ルートハンドラーで以下のようなコードを使用して手動で抽出します：
 
 ```typescript
 const user = req.user;
 ```
 
-In order to make your code more readable and transparent, you can create a `@User()` decorator and reuse it across all of your controllers.
+コードをより読みやすく透明にするために、`@User()`デコレーターを作成し、すべてのコントローラーで再利用することができます：
 
 ```typescript
 @@filename(user.decorator)
@@ -79,7 +78,7 @@ export const User = createParamDecorator(
 );
 ```
 
-Then, you can simply use it wherever it fits your requirements.
+そして、必要に応じて簡単に使用することができます：
 
 ```typescript
 @@filename()
@@ -95,9 +94,9 @@ async findOne(user) {
 }
 ```
 
-#### Passing data
+#### データの受け渡し
 
-When the behavior of your decorator depends on some conditions, you can use the `data` parameter to pass an argument to the decorator's factory function. One use case for this is a custom decorator that extracts properties from the request object by key. Let's assume, for example, that our <a href="techniques/authentication#implementing-passport-strategies">authentication layer</a> validates requests and attaches a user entity to the request object. The user entity for an authenticated request might look like:
+デコレーターの動作が特定の条件に依存する場合、`data`パラメーターを使用してデコレーターのファクトリー関数に引数を渡すことができます。これの一つのユースケースは、キーによってリクエストオブジェクトからプロパティを抽出するカスタムデコレーターです。例えば、<a href="techniques/authentication#implementing-passport-strategies">認証レイヤー</a>がリクエストを検証し、ユーザーエンティティをリクエストオブジェクトに付加すると仮定します。認証されたリクエストのユーザーエンティティは以下のようになります：
 
 ```json
 {
@@ -109,7 +108,7 @@ When the behavior of your decorator depends on some conditions, you can use the 
 }
 ```
 
-Let's define a decorator that takes a property name as key, and returns the associated value if it exists (or undefined if it doesn't exist, or if the `user` object has not been created).
+プロパティ名をキーとして受け取り、関連する値が存在する場合はその値を返す（存在しない場合や`user`オブジェクトが作成されていない場合はundefined）デコレーターを定義してみましょう：
 
 ```typescript
 @@filename(user.decorator)
@@ -134,7 +133,7 @@ export const User = createParamDecorator((data, ctx) => {
 });
 ```
 
-Here's how you could then access a particular property via the `@User()` decorator in the controller:
+コントローラーで`@User()`デコレーターを使用して特定のプロパティにアクセスする方法は以下の通りです：
 
 ```typescript
 @@filename()
@@ -150,13 +149,13 @@ async findOne(firstName) {
 }
 ```
 
-You can use this same decorator with different keys to access different properties. If the `user` object is deep or complex, this can make for easier and more readable request handler implementations.
+このデコレーターを異なるキーで使用して、異なるプロパティにアクセスすることができます。`user`オブジェクトが深いまたは複雑な場合、これによってリクエストハンドラーの実装がより簡単で読みやすくなります。
 
-> info **Hint** For TypeScript users, note that `createParamDecorator<T>()` is a generic. This means you can explicitly enforce type safety, for example `createParamDecorator<string>((data, ctx) => ...)`. Alternatively, specify a parameter type in the factory function, for example `createParamDecorator((data: string, ctx) => ...)`. If you omit both, the type for `data` will be `any`.
+> info **ヒント** TypeScriptユーザーの場合、`createParamDecorator<T>()`はジェネリックであることに注意してください。これは型安全性を明示的に強制できることを意味します。例えば`createParamDecorator<string>((data, ctx) => ...)`のように書くことができます。または、ファクトリー関数でパラメーター型を指定することもできます。例：`createParamDecorator((data: string, ctx) => ...)`。両方を省略した場合、`data`の型は`any`になります。
 
-#### Working with pipes
+#### パイプの使用
 
-Nest treats custom param decorators in the same fashion as the built-in ones (`@Body()`, `@Param()` and `@Query()`). This means that pipes are executed for the custom annotated parameters as well (in our examples, the `user` argument). Moreover, you can apply the pipe directly to the custom decorator:
+Nestはカスタムパラメーターデコレーターを組み込みのもの（`@Body()`、`@Param()`、`@Query()`）と同じように扱います。これは、カスタムデコレーターが付けられたパラメーター（例では`user`引数）に対してもパイプが実行されることを意味します。さらに、パイプをカスタムデコレーターに直接適用することもできます：
 
 ```typescript
 @@filename()
@@ -175,11 +174,11 @@ async findOne(user) {
 }
 ```
 
-> info **Hint** Note that `validateCustomDecorators` option must be set to true. `ValidationPipe` does not validate arguments annotated with the custom decorators by default.
+> info **ヒント** `validateCustomDecorators`オプションをtrueに設定する必要があることに注意してください。`ValidationPipe`はデフォルトではカスタムデコレーターで注釈付けされた引数を検証しません。
 
-#### Decorator composition
+#### デコレーターの合成
 
-Nest provides a helper method to compose multiple decorators. For example, suppose you want to combine all decorators related to authentication into a single decorator. This could be done with the following construction:
+Nestは複数のデコレーターを合成するためのヘルパーメソッドを提供します。例えば、認証に関連するすべてのデコレーターを1つのデコレーターにまとめたい場合、以下のような構成で実現できます：
 
 ```typescript
 @@filename(auth.decorator)
@@ -206,7 +205,7 @@ export function Auth(...roles) {
 }
 ```
 
-You can then use this custom `@Auth()` decorator as follows:
+このカスタム`@Auth()`デコレーターは以下のように使用できます：
 
 ```typescript
 @Get('users')
@@ -214,6 +213,61 @@ You can then use this custom `@Auth()` decorator as follows:
 findAllUsers() {}
 ```
 
-This has the effect of applying all four decorators with a single declaration.
+これにより、4つのデコレーターすべてを1つの宣言で適用する効果があります。
 
-> warning **Warning** The `@ApiHideProperty()` decorator from the `@nestjs/swagger` package is not composable and won't work properly with the `applyDecorators` function.
+> warning **警告** `@nestjs/swagger`パッケージの`@ApiHideProperty()`デコレーターは合成可能ではなく、`applyDecorators`関数では正しく動作しません。
+
+カスタムデコレーターの主要なユースケースをまとめます：
+
+1. ユーザー認証/認可関連
+```typescript
+@Auth('admin')  // 役割ベースの認証
+@RequirePermissions(['read', 'write'])  // 権限チェック
+@IsAuthenticated()  // 認証状態の確認
+```
+
+2. リクエストデータの抽出と加工
+```typescript
+@User()  // ユーザー情報の抽出
+@Company()  // 企業情報の抽出
+@CurrentTenant()  // マルチテナント環境でのテナント情報取得
+```
+
+3. バリデーションと変換
+```typescript
+@Sanitize()  // 入力データのサニタイズ
+@Transform(TransformationType.ToNumber)  // データ型変換
+@ValidateIf(condition)  // 条件付きバリデーション
+```
+
+4. キャッシュと最適化
+```typescript
+@Cache(TTL.FIVE_MINUTES)  // レスポンスのキャッシュ
+@NoCache()  // キャッシュの無効化
+@CompressResponse()  // レスポンス圧縮
+```
+
+5. ロギングとモニタリング
+```typescript
+@Log('api-access')  // アクセスログ
+@TrackPerformance()  // パフォーマンス測定
+@Metric('endpoint-calls')  // メトリクス収集
+```
+
+6. 複数のデコレーターの組み合わせ
+```typescript
+@ApiEndpoint({ 
+  roles: ['admin'], 
+  cache: true,
+  log: true 
+})  // 複数の機能を1つのデコレーターにまとめる
+```
+
+これらのカスタムデコレーターを使用することで：
+- コードの重複を減らせる
+- 横断的な関心事を分離できる
+- 宣言的なプログラミングスタイルを実現できる
+- テストがしやすくなる
+- コードの可読性が向上する
+
+実装の際は、デコレーターが単一責任の原則に従い、再利用可能で、適切にテストされていることを確認することが重要です。
