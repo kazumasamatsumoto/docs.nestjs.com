@@ -1,26 +1,25 @@
-### Middleware
+### ミドルウェア
 
-Middleware is a function which is called **before** the route handler. Middleware functions have access to the [request](https://expressjs.com/en/4x/api.html#req) and [response](https://expressjs.com/en/4x/api.html#res) objects, and the `next()` middleware function in the application’s request-response cycle. The **next** middleware function is commonly denoted by a variable named `next`.
+ミドルウェアは、ルートハンドラーの**前**に呼び出される関数です。ミドルウェア関数は、アプリケーションのリクエスト-レスポンスサイクルにおいて[request](https://expressjs.com/en/4x/api.html#req)オブジェクトと[response](https://expressjs.com/en/4x/api.html#res)オブジェクト、そして`next()`ミドルウェア関数にアクセスできます。**next**ミドルウェア関数は、一般的に`next`という名前の変数で表されます。
 
 <figure><img class="illustrative-image" src="/assets/Middlewares_1.png" /></figure>
 
-Nest middleware are, by default, equivalent to [express](https://expressjs.com/en/guide/using-middleware.html) middleware. The following description from the official express documentation describes the capabilities of middleware:
+Nestのミドルウェアは、デフォルトで[express](https://expressjs.com/en/guide/using-middleware.html)のミドルウェアと同等です。Express公式ドキュメントからの以下の説明は、ミドルウェアの機能を示しています：
 
 <blockquote class="external">
-  Middleware functions can perform the following tasks:
+  ミドルウェア関数は以下のタスクを実行できます：
   <ul>
-    <li>execute any code.</li>
-    <li>make changes to the request and the response objects.</li>
-    <li>end the request-response cycle.</li>
-    <li>call the next middleware function in the stack.</li>
-    <li>if the current middleware function does not end the request-response cycle, it must call <code>next()</code> to
-      pass control to the next middleware function. Otherwise, the request will be left hanging.</li>
+    <li>任意のコードを実行する。</li>
+    <li>requestオブジェクトとresponseオブジェクトに変更を加える。</li>
+    <li>リクエスト-レスポンスサイクルを終了する。</li>
+    <li>スタック内の次のミドルウェア関数を呼び出す。</li>
+    <li>現在のミドルウェア関数がリクエスト-レスポンスサイクルを終了しない場合、次のミドルウェア関数に制御を渡すために<code>next()</code>を呼び出す必要があります。そうしないと、リクエストは宙ぶらりんの状態になります。</li>
   </ul>
 </blockquote>
 
-You implement custom Nest middleware in either a function, or in a class with an `@Injectable()` decorator. The class should implement the `NestMiddleware` interface, while the function does not have any special requirements. Let's start by implementing a simple middleware feature using the class method.
+カスタムNestミドルウェアは、関数として、または`@Injectable()`デコレータを持つクラスとして実装できます。クラスは`NestMiddleware`インターフェースを実装する必要がありますが、関数には特別な要件はありません。クラスメソッドを使用して、シンプルなミドルウェア機能を実装してみましょう。
 
-> warning **Warning** `Express` and `fastify` handle middleware differently and provide different method signatures, read more [here](/techniques/performance#middleware).
+> warning **警告** `Express`と`fastify`はミドルウェアの扱い方が異なり、異なるメソッドシグネチャを提供します。詳細は[こちら](/techniques/performance#middleware)をご覧ください。
 
 ```typescript
 @@filename(logger.middleware)
@@ -46,13 +45,13 @@ export class LoggerMiddleware {
 }
 ```
 
-#### Dependency injection
+#### 依存性の注入
 
-Nest middleware fully supports Dependency Injection. Just as with providers and controllers, they are able to **inject dependencies** that are available within the same module. As usual, this is done through the `constructor`.
+Nestミドルウェアは依存性の注入を完全にサポートしています。プロバイダーやコントローラーと同様に、同じモジュール内で利用可能な依存関係を**注入**することができます。通常通り、これは`constructor`を通じて行われます。
 
-#### Applying middleware
+#### ミドルウェアの適用
 
-There is no place for middleware in the `@Module()` decorator. Instead, we set them up using the `configure()` method of the module class. Modules that include middleware have to implement the `NestModule` interface. Let's set up the `LoggerMiddleware` at the `AppModule` level.
+`@Module()`デコレータにはミドルウェアの場所はありません。代わりに、モジュールクラスの`configure()`メソッドを使用してセットアップします。ミドルウェアを含むモジュールは`NestModule`インターフェースを実装する必要があります。`AppModule`レベルで`LoggerMiddleware`をセットアップしてみましょう。
 
 ```typescript
 @@filename(app.module)
@@ -87,7 +86,7 @@ export class AppModule {
 }
 ```
 
-In the above example we have set up the `LoggerMiddleware` for the `/cats` route handlers that were previously defined inside the `CatsController`. We may also further restrict a middleware to a particular request method by passing an object containing the route `path` and request `method` to the `forRoutes()` method when configuring the middleware. In the example below, notice that we import the `RequestMethod` enum to reference the desired request method type.
+上記の例では、`CatsController`内で以前定義した`/cats`ルートハンドラーに対して`LoggerMiddleware`をセットアップしています。また、ミドルウェアを設定する際に`forRoutes()`メソッドにルートの`path`とリクエストの`method`を含むオブジェクトを渡すことで、特定のリクエストメソッドにミドルウェアを制限することもできます。以下の例では、目的のリクエストメソッドタイプを参照するために`RequestMethod`列挙型をインポートしていることに注目してください。
 
 ```typescript
 @@filename(app.module)
@@ -122,13 +121,13 @@ export class AppModule {
 }
 ```
 
-> info **Hint** The `configure()` method can be made asynchronous using `async/await` (e.g., you can `await` completion of an asynchronous operation inside the `configure()` method body).
+> info **ヒント** `configure()`メソッドは`async/await`を使用して非同期にすることができます（例：`configure()`メソッド本体内で非同期操作の完了を`await`できます）。
 
-> warning **Warning** When using the `express` adapter, the NestJS app will register `json` and `urlencoded` from the package `body-parser` by default. This means if you want to customize that middleware via the `MiddlewareConsumer`, you need to turn off the global middleware by setting the `bodyParser` flag to `false` when creating the application with `NestFactory.create()`.
+> warning **警告** `express`アダプターを使用する場合、NestJSアプリはデフォルトで`body-parser`パッケージから`json`と`urlencoded`を登録します。これは、`MiddlewareConsumer`を通じてそのミドルウェアをカスタマイズしたい場合、`NestFactory.create()`でアプリケーションを作成する際に`bodyParser`フラグを`false`に設定してグローバルミドルウェアをオフにする必要があることを意味します。
 
-#### Route wildcards
+#### ルートのワイルドカード
 
-Pattern-based routes are also supported in NestJS middleware. For example, the named wildcard (`*splat`) can be used as a wildcard to match any combination of characters in a route. In the following example, the middleware will be executed for any route that starts with `abcd/`, regardless of the number of characters that follow.
+NestJSミドルウェアではパターンベースのルートもサポートされています。例えば、名前付きワイルドカード（`*splat`）を使用して、ルート内の任意の文字の組み合わせにマッチさせることができます。以下の例では、後続の文字数に関係なく、`abcd/`で始まる任意のルートに対してミドルウェアが実行されます。
 
 ```typescript
 forRoutes({
@@ -137,9 +136,9 @@ forRoutes({
 });
 ```
 
-> info **Hint** `splat` is simply the name of the wildcard parameter and has no special meaning. You can name it anything you like, for example, `*wildcard`.
+> info **ヒント** `splat`はワイルドカードパラメータの単なる名前で、特別な意味はありません。例えば`*wildcard`のように、好きな名前を付けることができます。
 
-The `'abcd/*'` route path will match `abcd/1`, `abcd/123`, `abcd/abc`, and so on. The hyphen ( `-`) and the dot (`.`) are interpreted literally by string-based paths. However, `abcd/` with no additional characters will not match the route. For this, you need to wrap the wildcard in braces to make it optional:
+`'abcd/*'`というルートパスは、`abcd/1`、`abcd/123`、`abcd/abc`などにマッチします。ハイフン（`-`）とドット（`.`）は文字列ベースのパスでは文字通りに解釈されます。ただし、追加の文字がない`abcd/`はルートにマッチしません。これには、ワイルドカードを中括弧で囲んでオプショナルにする必要があります：
 
 ```typescript
 forRoutes({
@@ -148,9 +147,9 @@ forRoutes({
 });
 ```
 
-#### Middleware consumer
+#### ミドルウェアコンシューマー
 
-The `MiddlewareConsumer` is a helper class. It provides several built-in methods to manage middleware. All of them can be simply **chained** in the [fluent style](https://en.wikipedia.org/wiki/Fluent_interface). The `forRoutes()` method can take a single string, multiple strings, a `RouteInfo` object, a controller class and even multiple controller classes. In most cases you'll probably just pass a list of **controllers** separated by commas. Below is an example with a single controller:
+`MiddlewareConsumer`はヘルパークラスです。ミドルウェアを管理するための複数のビルトインメソッドを提供します。これらはすべて[フルエントスタイル](https://en.wikipedia.org/wiki/Fluent_interface)で**チェーン**することができます。`forRoutes()`メソッドは、単一の文字列、複数の文字列、`RouteInfo`オブジェクト、コントローラークラス、さらには複数のコントローラークラスを受け取ることができます。ほとんどの場合、おそらくカンマで区切られた**コントローラー**のリストを渡すことになるでしょう。以下は単一のコントローラーを使用した例です：
 
 ```typescript
 @@filename(app.module)
@@ -187,13 +186,13 @@ export class AppModule {
 }
 ```
 
-> info **Hint** The `apply()` method may either take a single middleware, or multiple arguments to specify <a href="/middleware#multiple-middleware">multiple middlewares</a>.
+> info **ヒント** `apply()`メソッドは単一のミドルウェアを取ることも、<a href="/middleware#multiple-middleware">複数のミドルウェア</a>を指定するための複数の引数を取ることもできます。
 
-#### Excluding routes
+#### ルートの除外
 
-At times, we may want to **exclude** certain routes from having middleware applied. This can be easily achieved using the `exclude()` method. The `exclude()` method accepts a single string, multiple strings, or a `RouteInfo` object to identify the routes to be excluded.
+場合によっては、特定のルートにミドルウェアを適用したくない場合があります。これは`exclude()`メソッドを使用して簡単に実現できます。`exclude()`メソッドは、除外するルートを識別するために、単一の文字列、複数の文字列、または`RouteInfo`オブジェクトを受け取ります。
 
-Here's an example of how to use it:
+使用例は以下の通りです：
 
 ```typescript
 consumer
@@ -206,15 +205,15 @@ consumer
   .forRoutes(CatsController);
 ```
 
-> info **Hint** The `exclude()` method supports wildcard parameters using the [path-to-regexp](https://github.com/pillarjs/path-to-regexp#parameters) package.
+> info **ヒント** `exclude()`メソッドは[path-to-regexp](https://github.com/pillarjs/path-to-regexp#parameters)パッケージを使用してワイルドカードパラメータをサポートしています。
 
-With the example above, `LoggerMiddleware` will be bound to all routes defined inside `CatsController` **except** the three passed to the `exclude()` method.
+上記の例では、`LoggerMiddleware`は`CatsController`内で定義されたすべてのルートに適用されますが、`exclude()`メソッドに渡された3つのルートは**除外**されます。
 
-This approach provides flexibility in applying or excluding middleware based on specific routes or route patterns.
+このアプローチにより、特定のルートやルートパターンに基づいてミドルウェアを適用または除外する柔軟性が提供されます。
 
-#### Functional middleware
+#### 関数型ミドルウェア
 
-The `LoggerMiddleware` class we've been using is quite simple. It has no members, no additional methods, and no dependencies. Why can't we just define it in a simple function instead of a class? In fact, we can. This type of middleware is called **functional middleware**. Let's transform the logger middleware from class-based into functional middleware to illustrate the difference:
+これまで使用してきた`LoggerMiddleware`クラスはとてもシンプルです。メンバー、追加のメソッド、依存関係がありません。なぜクラスの代わりにシンプルな関数として定義できないのでしょうか？実際、そうすることができます。このタイプのミドルウェアは**関数型ミドルウェア**と呼ばれます。違いを説明するために、ロガーミドルウェアをクラスベースから関数型ミドルウェアに変換してみましょう：
 
 ```typescript
 @@filename(logger.middleware)
@@ -231,7 +230,7 @@ export function logger(req, res, next) {
 };
 ```
 
-And use it within the `AppModule`:
+そして`AppModule`内で使用します：
 
 ```typescript
 @@filename(app.module)
@@ -240,19 +239,19 @@ consumer
   .forRoutes(CatsController);
 ```
 
-> info **Hint** Consider using the simpler **functional middleware** alternative any time your middleware doesn't need any dependencies.
+> info **ヒント** ミドルウェアが依存関係を必要としない場合は、より簡単な**関数型ミドルウェア**の代替手段を検討してください。
 
-#### Multiple middleware
+#### 複数のミドルウェア
 
-As mentioned above, in order to bind multiple middleware that are executed sequentially, simply provide a comma separated list inside the `apply()` method:
+上述の通り、順番に実行される複数のミドルウェアをバインドするには、`apply()`メソッド内でカンマで区切ったリストを提供するだけです：
 
 ```typescript
 consumer.apply(cors(), helmet(), logger).forRoutes(CatsController);
 ```
 
-#### Global middleware
+#### グローバルミドルウェア
 
-If we want to bind middleware to every registered route at once, we can use the `use()` method that is supplied by the `INestApplication` instance:
+登録されたすべてのルートに一度にミドルウェアをバインドしたい場合は、`INestApplication`インスタンスが提供する`use()`メソッドを使用できます：
 
 ```typescript
 @@filename(main)
@@ -261,4 +260,77 @@ app.use(logger);
 await app.listen(process.env.PORT ?? 3000);
 ```
 
-> info **Hint** Accessing the DI container in a global middleware is not possible. You can use a [functional middleware](middleware#functional-middleware) instead when using `app.use()`. Alternatively, you can use a class middleware and consume it with `.forRoutes('*')` within the `AppModule` (or any other module).
+> info **ヒント** グローバルミドルウェアでDIコンテナにアクセスすることはできません。`app.use()`を使用する場合は、代わりに[関数型ミドルウェア](middleware#functional-middleware)を使用できます。または、クラスミドルウェアを使用して、`AppModule`（または他のモジュール）内で`.forRoutes('*')`と共に消費することもできます。
+
+> info **ヒント** グローバルミドルウェアでDIコンテナにアクセスすることはできません。`app.use()`を使用する場合は、代わりに[関数型ミドルウェア](middleware#functional-middleware)を使用できます。あるいは、クラスミドルウェアを使用し、`AppModule`（または他のモジュール）内で`.forRoutes('*')`と共に使用することもできます。
+
+以上で、NestJSのミドルウェアに関する説明の全文を翻訳し終えました。このドキュメントでは、以下の主要なトピックをカバーしました：
+
+- ミドルウェアの基本概念と機能
+- クラスベースと関数型のミドルウェアの実装方法
+- 依存性の注入のサポート
+- ミドルウェアの適用方法とルート設定
+- ワイルドカードルートの使用
+- ミドルウェアコンシューマーの使用法
+- ルートの除外機能
+- 複数のミドルウェアの適用
+- グローバルミドルウェアの設定
+
+これらの機能を使用することで、アプリケーションのリクエスト処理パイプラインを効果的にカスタマイズすることができます。各機能は異なるユースケースに対応し、アプリケーションの要件に応じて柔軟に組み合わせることができます。
+
+NestJSミドルウェアの主要なユースケースをまとめます：
+
+1. リクエストのログ記録
+- リクエストの詳細（メソッド、URL、ヘッダー、IPアドレスなど）の記録
+- アプリケーションの監視やデバッグに活用
+- パフォーマンス計測（リクエスト処理時間の記録）
+
+2. 認証・認可
+- JWTトークンの検証
+- APIキーの確認
+- ユーザーの権限チェック
+- セッション管理
+
+3. リクエスト前処理
+- リクエストボディの変換や正規化
+- カスタムヘッダーの追加
+- リクエストの検証
+- データの型変換
+
+4. セキュリティ対策
+- CORS設定
+- CSRFトークン検証
+- レート制限（Rate limiting）の実装
+- XSS対策
+- SQLインジェクション対策
+
+5. キャッシュ制御
+- レスポンスのキャッシュ
+- 条件付きリクエストの処理
+- キャッシュヘッダーの管理
+
+6. エラーハンドリング
+- グローバルなエラートラップ
+- エラーのフォーマット統一
+- カスタムエラーレスポンスの生成
+
+7. データ圧縮
+- レスポンスの圧縮
+- 大きなデータの効率的な転送
+
+8. 言語・地域対応
+- 多言語対応（i18n）
+- タイムゾーン調整
+- 地域固有の設定適用
+
+9. リクエスト制御
+- リクエストのサイズ制限
+- ファイルアップロードの制御
+- リクエストのタイムアウト設定
+
+10. メトリクス収集
+- アプリケーションの利用統計
+- パフォーマンスモニタリング
+- ユーザー行動の分析
+
+これらのユースケースは、アプリケーションの要件に応じて組み合わせることができ、クラスベースまたは関数型のミドルウェアとして実装できます。また、特定のルートに限定したり、グローバルに適用したりすることで、柔軟な制御が可能です。
